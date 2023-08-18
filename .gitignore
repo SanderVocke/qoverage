@@ -1,0 +1,4 @@
+**/__pycache__
+qoverage.egg-info
+build
+dist
