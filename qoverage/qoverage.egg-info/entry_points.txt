@@ -1,0 +1,2 @@
+[console_scripts]
+qoverage = qoverage.__main__:main

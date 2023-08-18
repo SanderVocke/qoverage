@@ -1,0 +1,8 @@
+LICENSE
+README.md
+pyproject.toml
+qoverage/qoverage.egg-info/PKG-INFO
+qoverage/qoverage.egg-info/SOURCES.txt
+qoverage/qoverage.egg-info/dependency_links.txt
+qoverage/qoverage.egg-info/entry_points.txt
+qoverage/qoverage.egg-info/top_level.txt

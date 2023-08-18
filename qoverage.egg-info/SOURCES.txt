@@ -1,0 +1,17 @@
+LICENSE
+README.md
+pyproject.toml
+qoverage/__init__.py
+qoverage/__main__.py
+qoverage/annotate.py
+qoverage/dom.py
+qoverage/find_qmldom.py
+qoverage/parse_coverage.py
+qoverage/qmldom.py
+qoverage/report.py
+qoverage.egg-info/PKG-INFO
+qoverage.egg-info/SOURCES.txt
+qoverage.egg-info/dependency_links.txt
+qoverage.egg-info/entry_points.txt
+qoverage.egg-info/requires.txt
+qoverage.egg-info/top_level.txt
