@@ -33,6 +33,13 @@ Note that for the time being, the tool is not rigorously tested. False positives
 
 This is just a disclaimer in order to be aware and to look critically at the results. Regardless, for the purpose of "was this line ever executed", the exact amount of hits is irrelevant.
 
+## Using the report
+
+Qoverage generates a Cobertura-style XML report. There is no built-in method to generate nice-looking human-readable reports. However, there are some options to go from the XML report to something more readable:
+
+* Using [https://pypi.org/project/pycobertura/](pycobertura), a command-line utility which supports Cobertura XML to HTML conversion.
+* Uploading the XML to ah online coverage-tracking site like [app.codecov.io](CodeCov).
+
 ## Details
 
 ### Collection method
