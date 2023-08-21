@@ -14,14 +14,14 @@ ApplicationWindow {                        // COV:1
                                            // COV:null
         Component.onCompleted: {           // COV:1
             console.log("hi")              // COV:1
-                                           // COV:null
+                                           // COV:1
             console.log("ho")              // COV:1
-                                           // COV:null
-                                           // COV:null
-                                           // COV:null
-                                           // COV:null
+                                           // COV:1
+                                           // COV:1
+                                           // COV:1
+                                           // COV:1
             console.log("bla" + "bla")     // COV:1
-                                           // COV:null
+                                           // COV:1
             quittimer.running = true       // COV:1
         }                                  // COV:1
     }                                      // COV:null

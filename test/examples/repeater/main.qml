@@ -19,7 +19,7 @@ ApplicationWindow {                        // COV:1
             Component.onCompleted: {       // COV:10
                 console.log('Foo')         // COV:10
                 quittimer.running = true   // COV:10
-            }                              // COV:null
+            }                              // COV:10
         }                                  // COV:null
     }                                      // COV:null
                                            // COV:null
