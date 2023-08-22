@@ -18,9 +18,17 @@ class QMLDom:
     
     def ast(self, contents) -> str:
         with tempfile.NamedTemporaryFile(mode='w', delete=True, suffix='.qml') as f:
-            f.write(contents)
-            f.flush()
-            return subprocess.check_output([self.qmldom, '--dump-ast', f.name], stderr=subprocess.DEVNULL).decode('utf-8')
+            try:
+                f.write(contents)
+                f.flush()
+                return subprocess.check_output([self.qmldom, '--dump-ast', f.name], stderr=subprocess.DEVNULL).decode('utf-8')
+            except Exception as e:
+                logger.error('Failed to parse QML file: {}'.format(e))
+                return ''
     
     def ast_dom(self, contents) -> xml.dom.minidom.Document:
-        return xml.dom.minidom.parseString(self.ast(contents))
+        try:
+            return xml.dom.minidom.parseString(self.ast(contents))
+        except Exception as e:
+            logger.error('Failed to parse QMLDom XML: {}'.format(e))
+            return None

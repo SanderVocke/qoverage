@@ -43,8 +43,15 @@ def instrument(args, logger, debug):
     for qml_file in qml_files:
         logger.debug('Pre-annotating: {}'.format(qml_file))
 
+        contents = None
+        with open(qml_file, 'r') as f:
+            contents = f.read()
+
         out_file = ''
         if args.in_place:
+            if not args.no_backups:
+                with open('{}.qoverage.bkp'.format(qml_file), 'w') as f:
+                    f.write(contents)
             out_file = qml_file
         elif args.output_path:
             if not args.glob_base:
@@ -53,19 +60,20 @@ def instrument(args, logger, debug):
             subpath = os.path.relpath(os.path.abspath(qml_file), os.path.abspath(args.glob_base))
             out_file = os.path.join(args.output_path, subpath)
 
-        contents = None
-        with open(qml_file, 'r') as f:
-            contents = f.read()
-        pre_annotated = pre_annotate(contents, qmldom, debug=debug)
-        db_js_filename = out_file + '.qoverage.js'
-        annotated,runtime_db_js = final_annotate(pre_annotated, os.path.basename(db_js_filename), debug=debug)
-        with open(out_file, 'w') as f:
-            f.write(annotated)
-        with open(db_js_filename, 'w') as f:
-            f.write(runtime_db_js)
-        if args.store_intermediates:
-            with open(out_file + '.pre', 'w') as f:
-                f.write(pre_annotated)
+        try:
+            pre_annotated = pre_annotate(contents, qmldom, debug=debug)
+            db_js_filename = out_file + '.qoverage.js'
+            annotated,runtime_db_js = final_annotate(pre_annotated, os.path.basename(db_js_filename), debug=debug)
+            with open(out_file, 'w') as f:
+                f.write(annotated)
+            with open(db_js_filename, 'w') as f:
+                f.write(runtime_db_js)
+            if args.store_intermediates:
+                with open(out_file + '.qoverage.pre', 'w') as f:
+                    f.write(pre_annotated)
+        except Exception as e:
+            logger.error('Failed to instrument {}: {}. Skipping.'.format(qml_file, e))
+            continue
     
 def collect(maybe_filename, maybe_cmd, basedir, report_filename, logger):
     if maybe_cmd and maybe_filename:
@@ -134,6 +142,17 @@ def collect(maybe_filename, maybe_cmd, basedir, report_filename, logger):
     with open(report_filename, 'w') as f:
         f.write(report)
 
+def restore(path):
+    backups = glob.glob('{}/**/*.qoverage.bkp'.format(path), recursive=True)
+    for backup in backups:
+        os.rename(backup, backup.replace('.qoverage.bkp', ''))
+    dbs = glob.glob('{}/**/*.qoverage.js'.format(path), recursive=True)
+    for db in dbs:
+        os.remove(db)
+    intermediates = glob.glob('{}/**/*.qoverage.pre'.format(path), recursive=True)
+    for intermediate in intermediates:
+        os.remove(intermediate)
+
 def main():
     try:
         QOVERAGE_LOGLEVEL = os.environ.get('QOVERAGE_LOGLEVEL', 'INFO').upper()
@@ -157,6 +176,10 @@ def main():
         instrument_parser.add_argument('-o', '--output-path', help='Path to the output directory. Instrumented files will be stored here in relative paths to the search path.')
         instrument_parser.add_argument('-s', '--store-intermediates', action='store_true', help='Store intermediate files in the output directory. This includes the pre-annotated QML files. This is useful for debugging.')
         instrument_parser.add_argument('-d', '--debug-code', action='store_true', help='Inject additional debug code which is useful for validating the instrumentation.')
+        instrument_parser.add_argument('-n', '--no-backups', action='store_true', help='If running in-place instrumentation, usually qml files are backed up to .qoverage.bkp files. This flag disables that behavior.')
+
+        restore_parser = subparsers.add_parser('restore', help='Restore QML files backed up during in-place instrumentation.')
+        restore_parser.add_argument('-p', '--path', help='Path to the directory containing the instrumented files. Default is ./')
 
         collect_parser = subparsers.add_parser('collect', help='Collect code coverage results into a report. Either use -f/--file for parsing a file, or add a separate command on the end with -- <CMD> to run a command and parse directly.')
         collect_parser.add_argument('-r', '--report', default='coverage.xml', help='Path to the output coverage report file. Default is ./coverage.xml')
@@ -180,6 +203,14 @@ def main():
             return
         elif args.command == 'collect':
             collect(args.file, remainder, args.base, args.report, logger)
+            return
+        elif args.command == 'restore':
+            if remainder:
+                logger.error('The restore command does not take any additional arguments with a -- separator.')
+                exit(1)
+            if not args.path:
+                args.path = '.'
+            restore(args.path)
             return
         
     except Exception as e:

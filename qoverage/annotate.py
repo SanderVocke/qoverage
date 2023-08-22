@@ -46,6 +46,9 @@ def pre_annotate(contents, qmldom : QMLDom = None, debug=False) -> str:
     if not qmldom:
         qmldom = QMLDom()
     dom = qmldom.ast_dom(contents)
+    if not dom:
+        raise Exception('Failed to parse QML file')
+    
     annotations = []
     annotation_id = 0
 
@@ -118,7 +121,7 @@ def pre_annotate(contents, qmldom : QMLDom = None, debug=False) -> str:
             id = node_as(children_filter_nodes(parent_definition)[0], 'UiQualifiedId')
             if id:
                 name = id.getAttribute('name')
-                if name not in [ 'anchors', 'Timer', 'Repeater' ]:
+                if name not in [ 'anchors', 'Timer', 'Repeater', 'Connections', 'Component' ]:
                     add_annotation(token_offset(obj, 'lbraceToken') + 1, start_obj_annotation(annotation_id))
                     add_annotation(token_offset(obj, 'rbraceToken'), end_obj_annotation(annotation_id))
                     next_annotation()
@@ -205,9 +208,9 @@ def final_annotate(pre_annotated: str, db_lib_name: str, debug=False) -> str:
 
     def object_creation_marker():
         if debug:
-            return r'\nConnections {  Component.onCompleted: { console.log("[qoverage] create obj \1"); QoverageTracker.trace_obj_create(\1) } }\n'
+            return r'\nproperty QtObject __qoverage_creation_tracker: QtObject {  Component.onCompleted: { console.log("[qoverage] create obj \1"); QoverageTracker.trace_obj_create(\1) } }\n'
         else:
-            return r'\nConnections {  Component.onCompleted: QoverageTracker.trace_obj_create(\1) }\n'
+            return r'\nproperty QtObject __qoverage_creation_tracker: QtObject {  Component.onCompleted: QoverageTracker.trace_obj_create(\1) }\n'
     
     def exec_marker():
         if debug:

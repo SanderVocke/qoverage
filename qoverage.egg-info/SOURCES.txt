@@ -15,3 +15,4 @@ qoverage.egg-info/dependency_links.txt
 qoverage.egg-info/entry_points.txt
 qoverage.egg-info/requires.txt
 qoverage.egg-info/top_level.txt
+test/test_examples.py
