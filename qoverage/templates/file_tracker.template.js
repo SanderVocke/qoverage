@@ -19,16 +19,20 @@ class CoverageTracker {
 
         // Ensure that we report on exit
         Qt.application.aboutToQuit.connect(() => {
-            let filename = get_filename()
-            this.finalize(filename)
+            this.finalize(get_filename())
         })
+        if(qoverage_global_context) {
+            qoverage_global_context.onRequestReport.connect((report_fn) => {
+                this.finalize(get_filename(), report_fn)
+            })
+        }
     }
 
     trace(id) {
         this.data[id]++
     }
 
-    finalize(filename) {
+    finalize(filename, report_fn = (msg) => { throw new Error (msg) } ) {
         if (debug) { console.log("[qoverage] db finalize", get_filename()) }
 
         // Map the annotation triggers to line coverage.
@@ -45,7 +49,7 @@ class CoverageTracker {
             })
         })
 
-        throw new Error(
+        report_fn(
             '<QOVERAGERESULT file="' + filename + '">' +
             JSON.stringify(lines_data) +
             '</QOVERAGERESULT>'
