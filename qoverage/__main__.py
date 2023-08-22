@@ -48,6 +48,11 @@ def instrument(args, logger, debug):
             contents = f.read()
 
         out_file = ''
+        backup = '{}.qoverage.bkp'.format(qml_file)
+        if os.path.exists(backup):
+            logger.info('Backup file already exists. Instrumenting from the backup: {}'.format(qml_file))
+            qml_file = backup
+            continue
         if args.in_place:
             if not args.no_backups:
                 with open('{}.qoverage.bkp'.format(qml_file), 'w') as f:
@@ -59,10 +64,9 @@ def instrument(args, logger, debug):
                 exit(1)
             subpath = os.path.relpath(os.path.abspath(qml_file), os.path.abspath(args.glob_base))
             out_file = os.path.join(args.output_path, subpath)
-
         try:
-            pre_annotated = pre_annotate(contents, qmldom, debug=debug)
             db_js_filename = out_file + '.qoverage.js'
+            pre_annotated = pre_annotate(contents, qmldom, debug=debug)
             annotated,runtime_db_js = final_annotate(pre_annotated, os.path.basename(db_js_filename), debug=debug)
             with open(out_file, 'w') as f:
                 f.write(annotated)
@@ -142,8 +146,9 @@ def collect(maybe_filename, maybe_cmd, basedir, report_filename, logger):
     with open(report_filename, 'w') as f:
         f.write(report)
 
-def restore(path):
+def restore(path, logger):
     backups = glob.glob('{}/**/*.qoverage.bkp'.format(path), recursive=True)
+    logger.info("Found {} backups, restoring.".format(len(backups)))
     for backup in backups:
         os.rename(backup, backup.replace('.qoverage.bkp', ''))
     dbs = glob.glob('{}/**/*.qoverage.js'.format(path), recursive=True)
@@ -210,7 +215,7 @@ def main():
                 exit(1)
             if not args.path:
                 args.path = '.'
-            restore(args.path)
+            restore(args.path, logger)
             return
         
     except Exception as e:

@@ -3,16 +3,23 @@ const ids_to_lines = $ids_to_lines
 const include_lines = $include_lines
 const n_lines = $n_lines
 const n_annotations = $n_annotations
+const debug = $debug
+
+function get_filename() {
+    return new Error().stack.split('\n')[0].replace(/.*file:\/\//, "").replace(/.qoverage.js:.*/, "")
+}
 
 class CoverageTracker {
     constructor(n) {
+        if (debug) { console.log("[qoverage] db init", get_filename(), ', app: ', Qt.application) }
+
         // the data field tracks how often each instrumentation
         // annotation was triggered.
         this.data = Array(n).fill(0)
 
         // Ensure that we report on exit
         Qt.application.aboutToQuit.connect(() => {
-            let filename = new Error().stack.replace(/.*file:\/\//, "").replace(/.qoverage.js:.*/, "")
+            let filename = get_filename()
             this.finalize(filename)
         })
     }
@@ -22,6 +29,8 @@ class CoverageTracker {
     }
 
     finalize(filename) {
+        if (debug) { console.log("[qoverage] db finalize", get_filename()) }
+
         // Map the annotation triggers to line coverage.
 
         var lines_data = Array(n_lines).fill(null)
@@ -36,7 +45,7 @@ class CoverageTracker {
             })
         })
 
-        console.log(
+        throw new Error(
             '<QOVERAGERESULT file="' + filename + '">' +
             JSON.stringify(lines_data) +
             '</QOVERAGERESULT>'

@@ -138,7 +138,7 @@ def pre_annotate(contents, qmldom : QMLDom = None, debug=False) -> str:
     logger.debug('Pre-annotated:\n{}'.format(result))
     return result
 
-def generate_db_js(db, n_lines):
+def generate_db_js(db, n_lines, debug=False):
     n_annotations = max(db.keys()) + 1
     ids_to_lines = {}
     include_lines = set()
@@ -159,7 +159,8 @@ def generate_db_js(db, n_lines):
         'n_annotations': n_annotations,
         'n_lines': n_lines,
         'ids_to_lines': json.dumps(ids_to_lines),
-        'include_lines': json.dumps(list(include_lines))
+        'include_lines': json.dumps(list(include_lines)),
+        'debug': ('true' if debug else 'false')
     }
 
     with open(script_dir + '/templates/file_tracker.template.js', 'r') as f:
@@ -204,7 +205,7 @@ def final_annotate(pre_annotated: str, db_lib_name: str, debug=False) -> str:
             exit(1)
         end_line = result.count('\n', 0, end_match.start())
         db_add_obj(id, start_line, end_line)
-    db_js = generate_db_js(db, pre_annotated.count('\n') + 1)
+    db_js = generate_db_js(db, pre_annotated.count('\n') + 1, debug=debug)
 
     def object_creation_marker():
         if debug:

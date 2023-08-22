@@ -41,6 +41,10 @@ Code is injected to gather execution data per execution block. Object instantiat
 
 Data is collected into global variables in a .js library import.
 
-Gathering the tracked data is a bit tricky because it seems that there is no built-in file IO mechanism in QML (except via file:// HTTP requests, but it seems that doesn't work when called during application exit).
+Gathering the tracked data is a tricky because the data somehow needs to be extracted at the instrumented app's runtime. Some problems:
 
-In order to keep this simple without needing any binary plugins, the data is simply output to the console.log output and parsed.
+* it seems that there is no built-in file IO mechanism in QML (except via file:// HTTP requests)
+* it seems that using console.log or the mentioned HTTP request-based file IO does not work when called during an appliction.aboutToQuit() handler from a global Javascript object.
+
+The preference is to keep it simple without any binary QML plugins used. The only method found was to raise javascript errors with the required coverage data in the exception message. This is done for each instrumented file, so it will clutter your console output with so-called errors but allow Qoverage to collect it.
+
