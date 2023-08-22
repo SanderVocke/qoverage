@@ -22,6 +22,7 @@ class CoverageTracker {
             this.finalize(get_filename())
         })
         if(qoverage_global_context) {
+            qoverage_global_context.report("Hello world!")
             qoverage_global_context.onRequestReport.connect((report_fn) => {
                 this.finalize(get_filename(), report_fn)
             })
