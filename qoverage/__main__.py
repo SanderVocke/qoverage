@@ -110,7 +110,7 @@ def collect(maybe_filename, maybe_cmd, basedir, maybe_replace_basedir, report_fi
     for tracked_file_db in all_tracked_files:
         tracked_file = tracked_file_db.replace('.qoverage.js', '')
         name_in_report = tracked_file if not maybe_replace_basedir else tracked_file.replace(full_base, maybe_replace_basedir)
-        if not name_in_report in coverages:
+        if not tracked_file in coverages:
             logger.debug('File was never loaded: {}. Inserting 0 coverage.'.format(tracked_file))
             with open(tracked_file_db, 'r') as f:
                 contents = f.read()
