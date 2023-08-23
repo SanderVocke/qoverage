@@ -80,7 +80,7 @@ def instrument(args, logger, debug):
             logger.error('Failed to instrument {}: {}. Skipping.'.format(qml_file, e))
             continue
     
-def collect(maybe_filename, maybe_cmd, basedir, report_filename, logger):
+def collect(maybe_filename, maybe_cmd, basedir, maybe_replace_basedir, report_filename, logger):
     if maybe_cmd and maybe_filename:
         raise Exception("Both a filename and a command were passed. Parsing can be done either on a file or on the output of a command, but not both.")
     if not maybe_cmd and not maybe_filename:
@@ -102,13 +102,14 @@ def collect(maybe_filename, maybe_cmd, basedir, report_filename, logger):
     
     # Run but record stdout for coverage reports
     coverages = {}
-    coverages = parse_coverage(lines, coverages, basedir, debug=False)
+    coverages = parse_coverage(lines, coverages)
 
     # Put 0 coverage data for files that were not collected
-    all_tracked_files = glob.glob('{}/**/*.qoverage.js'.format(basedir), recursive=True)
+    all_tracked_files = [os.path.normpath(os.path.abspath(g)) for g in glob.glob('{}/**/*.qoverage.js'.format(basedir), recursive=True)]
+    full_base = os.path.normpath(os.path.abspath(basedir))
     for tracked_file_db in all_tracked_files:
         tracked_file = tracked_file_db.replace('.qoverage.js', '')
-        name_in_report = os.path.abspath(tracked_file)
+        name_in_report = tracked_file if not maybe_replace_basedir else tracked_file.replace(full_base, maybe_replace_basedir)
         if not name_in_report in coverages:
             logger.debug('File was never loaded: {}. Inserting 0 coverage.'.format(tracked_file))
             with open(tracked_file_db, 'r') as f:
@@ -141,7 +142,8 @@ def collect(maybe_filename, maybe_cmd, basedir, report_filename, logger):
                 coverages[name_in_report] = json.dumps(this_file_cov)
 
     # Write coverage reports
-    report = generate_report(coverages, os.path.abspath(basedir))
+    reported_base = full_base if not maybe_replace_basedir else maybe_replace_basedir
+    report = generate_report(coverages, reported_base)
     logger.debug('Coverage report: {}'.format(report))
     
     logger.info('Writing coverage report to {}'.format(os.path.abspath(report_filename)))
@@ -193,6 +195,7 @@ def main():
         collect_parser.add_argument('-r', '--report', default='coverage.xml', help='Path to the output coverage report file. Default is ./coverage.xml')
         collect_parser.add_argument('-b', '--base' , default=os.path.abspath('.'), help='Base path for the coverage report, with respect to which the relative paths in the report are determined.')
         collect_parser.add_argument('-f', '--file', help='Path to a file containing stdout from the instrumented QML application. The file will be parsed for coverage results.')
+        collect_parser.add_argument('-n', '--replace-base', help='In the report, pretend the source code files were found relative to the given base path.')
 
         my_args = sys.argv[1:]
         remainder = None
@@ -210,7 +213,7 @@ def main():
             instrument(args, logger, debug=args.debug_code)
             return
         elif args.command == 'collect':
-            collect(args.file, remainder, args.base, args.report, logger)
+            collect(args.file, remainder, args.base, args.replace_base, args.report, logger)
             return
         elif args.command == 'restore':
             if remainder:
