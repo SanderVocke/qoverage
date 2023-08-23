@@ -10,7 +10,7 @@ def parse_coverage(lines, aggregated_data, base_dir, debug=False):
     for line in lines:
         match = re.match(r'.*<QOVERAGERESULT file="(.*)">(.*)<\/QOVERAGERESULT>.*', line)
         if match:
-            file = os.path.relpath(match.group(1), base_dir)
+            file = match.group(1)
             coverage = match.group(2)
             if file in aggregated_data:
                 logger.error('Received coverage for {} twice. This should not happen. Discarding exsting data.'.format(file))

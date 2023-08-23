@@ -108,8 +108,8 @@ def collect(maybe_filename, maybe_cmd, basedir, report_filename, logger):
     all_tracked_files = glob.glob('{}/**/*.qoverage.js'.format(basedir), recursive=True)
     for tracked_file_db in all_tracked_files:
         tracked_file = tracked_file_db.replace('.qoverage.js', '')
-        report_filename = os.path.relpath(tracked_file, basedir)
-        if not report_filename in coverages:
+        name_in_report = os.path.abspath(tracked_file)
+        if not name_in_report in coverages:
             logger.debug('File was never loaded: {}. Inserting 0 coverage.'.format(tracked_file))
             with open(tracked_file_db, 'r') as f:
                 contents = f.read()
@@ -138,10 +138,10 @@ def collect(maybe_filename, maybe_cmd, basedir, report_filename, logger):
                 for line in include_lines:
                     this_file_cov[line] = 0
                    
-                coverages[report_filename] = json.dumps(this_file_cov)
+                coverages[name_in_report] = json.dumps(this_file_cov)
 
     # Write coverage reports
-    report = generate_report(coverages, basedir)
+    report = generate_report(coverages, os.path.abspath(basedir))
     logger.debug('Coverage report: {}'.format(report))
     
     logger.info('Writing coverage report to {}'.format(os.path.abspath(report_filename)))
