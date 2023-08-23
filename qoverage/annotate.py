@@ -209,19 +209,19 @@ def final_annotate(pre_annotated: str, db_lib_name: str, debug=False) -> str:
 
     def object_creation_marker():
         if debug:
-            return r'\nproperty QtObject __qoverage_creation_tracker: QtObject {  Component.onCompleted: { console.log("[qoverage] create obj \1"); QoverageTracker.trace_obj_create(\1) } }\n'
+            return r'\nproperty QtObject __qoverage_creation_tracker: QtObject {  Component.onCompleted: { console.log("[qoverage] create obj \1"); QoverageCollector.trace_obj_create(\1) } }\n'
         else:
-            return r'\nproperty QtObject __qoverage_creation_tracker: QtObject {  Component.onCompleted: QoverageTracker.trace_obj_create(\1) }\n'
+            return r'\nproperty QtObject __qoverage_creation_tracker: QtObject {  Component.onCompleted: QoverageCollector.trace_obj_create(\1) }\n'
     
     def exec_marker():
         if debug:
-            return r'; console.log("[qoverage] exec block \1"); QoverageTracker.trace_exec_block(\1); '
+            return r'; console.log("[qoverage] exec block \1"); QoverageCollector.trace_exec_block(\1); '
         else:
-            return r'; QoverageTracker.trace_exec_block(\1); '
+            return r'; QoverageCollector.trace_exec_block(\1); '
 
     # Do the actual code injection
     result = "{}\n\n{}".format(
-        'import "./{}" as QoverageTracker'.format(db_lib_name),
+        'import "./{}" as QoverageCollector'.format(db_lib_name),
         result
     )
     # object initialization
