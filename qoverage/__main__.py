@@ -16,6 +16,7 @@ from .parse_coverage import parse_coverage
 
 def instrument(args, logger, debug):
     globs = args.glob
+    globs.extend(['{}/**/*.qml'.format(p) for p in args.path] if args.path else [])
     if not globs or len(globs) == 0:
         globs = ['./**/*.qml']
     def do_glob(path):
@@ -26,7 +27,7 @@ def instrument(args, logger, debug):
     # flatten
     qml_files = [item for sublist in qml_files for item in sublist]
     if len(qml_files) == 0:
-        logger.error('No QML files found. Please provide (a) globbing path(s) to the QML files with --path.')
+        logger.error('No QML files found. Please provide (a) globbing path(s) to the QML files with --path or --glob.')
         exit(1)
     logger.debug('QML files: {}'.format(qml_files))
     logger.info('Found {} QML files'.format(len(qml_files)))
@@ -182,6 +183,7 @@ def main():
         instrument_parser.add_argument('-s', '--store-intermediates', action='store_true', help='Store intermediate files in the output directory. This includes the pre-annotated QML files. This is useful for debugging.')
         instrument_parser.add_argument('-d', '--debug-code', action='store_true', help='Inject additional debug code which is useful for validating the instrumentation.')
         instrument_parser.add_argument('-n', '--no-backups', action='store_true', help='If running in-place instrumentation, usually qml files are backed up to .qoverage.bkp files. This flag disables that behavior.')
+        instrument_parser.add_argument('-p', '--path', action='append', help='Add QML file search path. Equivalent to --glob <path>/**/*.qml. Can be used multiple times.')
 
         restore_parser = subparsers.add_parser('restore', help='Restore QML files backed up during in-place instrumentation.')
         restore_parser.add_argument('-p', '--path', help='Path to the directory containing the instrumented files. Default is ./')

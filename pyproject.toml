@@ -50,3 +50,6 @@ Discussions = "https://github.com/SanderVocke/qoverage/discussions"
 where = ["."]
 include = ["qoverage"]
 exclude = []
+
+[tool.setuptools.package-data]
+qoverage = ["templates/*"]
