@@ -164,17 +164,11 @@ def restore(path, logger):
 
 def main():
     try:
-        QOVERAGE_LOGLEVEL = os.environ.get('QOVERAGE_LOGLEVEL', 'INFO').upper()
-        logging.basicConfig(
-            level=QOVERAGE_LOGLEVEL,
-            format='[%(name)s] [%(levelname)s] %(message)s'
-        )
-        logger = logging.getLogger('main')
-
         parser = argparse.ArgumentParser(
             prog="qoverage",
             description="Code coverage for QML"
         )
+        
         subparsers = parser.add_subparsers(help='sub-command help', dest='command')
 
         instrument_parser = subparsers.add_parser('instrument', help='Instrument QML files for code coverage')
@@ -187,15 +181,18 @@ def main():
         instrument_parser.add_argument('-d', '--debug-code', action='store_true', help='Inject additional debug code which is useful for validating the instrumentation.')
         instrument_parser.add_argument('-n', '--no-backups', action='store_true', help='If running in-place instrumentation, usually qml files are backed up to .qoverage.bkp files. This flag disables that behavior.')
         instrument_parser.add_argument('-p', '--path', action='append', help='Add QML file search path. Equivalent to --glob <path>/**/*.qml. Can be used multiple times.')
+        instrument_parser.add_argument('-v', '--verbose', action='store_true', help='Print debug messages')
 
         restore_parser = subparsers.add_parser('restore', help='Restore QML files backed up during in-place instrumentation.')
         restore_parser.add_argument('-p', '--path', help='Path to the directory containing the instrumented files. Default is ./')
+        restore_parser.add_argument('-v', '--verbose', action='store_true', help='Print debug messages')
 
         collect_parser = subparsers.add_parser('collect', help='Collect code coverage results into a report. Either use -f/--file for parsing a file, or add a separate command on the end with -- <CMD> to run a command and parse directly.')
         collect_parser.add_argument('-r', '--report', default='coverage.xml', help='Path to the output coverage report file. Default is ./coverage.xml')
         collect_parser.add_argument('-b', '--base' , default=os.path.abspath('.'), help='Base path for the coverage report, with respect to which the relative paths in the report are determined.')
         collect_parser.add_argument('-f', '--file', help='Path to a file containing stdout from the instrumented QML application. The file will be parsed for coverage results.')
         collect_parser.add_argument('-n', '--replace-base', help='In the report, pretend the source code files were found relative to the given base path.')
+        collect_parser.add_argument('-v', '--verbose', action='store_true', help='Print debug messages')
 
         my_args = sys.argv[1:]
         remainder = None
@@ -205,6 +202,15 @@ def main():
             my_args = my_args[:separator_index]
 
         args = parser.parse_args(my_args)
+        
+        QOVERAGE_LOGLEVEL = os.environ.get('QOVERAGE_LOGLEVEL', 'INFO').upper()
+        if args.verbose:
+            QOVERAGE_LOGLEVEL = 'DEBUG'
+        logging.basicConfig(
+            level=QOVERAGE_LOGLEVEL,
+            format='[%(name)s] [%(levelname)s] %(message)s'
+        )
+        logger = logging.getLogger('main')
 
         if args.command == 'instrument':
             if remainder:
