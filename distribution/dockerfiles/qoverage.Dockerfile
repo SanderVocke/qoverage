@@ -9,9 +9,9 @@ RUN python -m build -w .
 
 
 FROM archlinux:latest
-COPY --from=build /qoverage/dist/qoverage-*.whl /qoverage.whl
+COPY --from=build /qoverage/dist/qoverage-*.whl /
 RUN pacman -Sy --noconfirm python python-pip qt6-declarative
-RUN pip install --break-system-packages /qoverage.whl
-RUN rm /qoverage.whl
+RUN pip install --break-system-packages /*.whl
+RUN rm /*.whl
 ENV QMLDOM=/usr/lib/qt6/bin/qmldom
 ENTRYPOINT ["qoverage"]
