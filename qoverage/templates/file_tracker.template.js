@@ -9,56 +9,77 @@ function get_filename() {
     return new Error().stack.split('\n')[0].replace(/.*file:\/\//, "").replace(/.qoverage.js:.*/, "")
 }
 
-class CoverageTracker {
-    constructor(n) {
-        if (debug) { console.log("[qoverage] db init", get_filename(), ', app: ', Qt.application) }
+// This class implements the single-file collector interface and is the default
+// collector.
+class QoverageDefaultFileCollector {
+    // initial_line_states should be an array of 0 or null (untracked) values.
+    constructor(filename, initial_line_states) {
+        this.filename = filename
+        this.line_states = initial_line_states
+    }
 
-        // the data field tracks how often each instrumentation
-        // annotation was triggered.
-        this.data = Array(n).fill(0)
-
-        // Ensure that we report on exit
-        Qt.application.aboutToQuit.connect(() => {
-            let filename = get_filename()
-            this.finalize(filename)
+    trace(lines) {
+        lines.forEach( line => {
+            if (this.line_states[line] !== null) {
+                this.line_states[line]++
+            }
         })
     }
 
-    trace(id) {
-        this.data[id]++
-    }
-
-    finalize(filename) {
-        if (debug) { console.log("[qoverage] db finalize", get_filename()) }
-
-        // Map the annotation triggers to line coverage.
-
-        var lines_data = Array(n_lines).fill(null)
-        include_lines.forEach( l => {
-            lines_data[l] = 0
-        })
-
-        this.data.forEach( (n,id) => {
-            var lines = ids_to_lines[id]
-            lines.forEach( line => {
-                lines_data[line]+=n
-            })
-        })
-
+    report() {
+        // Note: from experience, throwing an error is the most reliable
+        // way to get text to the console. Console.log seems to not always
+        // work in different types of Qt apps.
+        // Since this error is thrown in a signal handler, it will not
+        // crash the app.
         throw new Error(
             '<QOVERAGERESULT file="' + filename + '">' +
-            JSON.stringify(lines_data) +
-            '</QOVERAGERESULT>'
+                JSON.stringify(lines_data) +
+                '</QOVERAGERESULT>'
         )
     }
 }
 
-var tracked_coverage = new CoverageTracker(n_annotations)
+class QoverageCollector {
+    constructor(filename, include_lines, ids_to_lines, n_lines) {
+        this.ids_to_lines = ids_to_lines
+
+        let data = Array(n_lines)
+        for(let i = 0; i < n_lines; i++) {
+            data[i] = include_lines.includes(i) ? 0 : null
+        }
+
+        // By default, create our own collector which will report on app aboutToQuit.
+        // If a global collector is defined, use that instead to get a per-file collector
+        // instance.
+        try {
+            this.collector = qoverage_collector_factory.create_file_collector(filename, data)
+        } catch (e) {
+            this.collector = new QoverageDefaultFileCollector(filename, data)
+            Qt.application.aboutToQuit.connect(() => {
+                this.collector.report()
+            })
+        }
+    }
+
+    trace(annotation_id) {
+        this.collector.trace(this.ids_to_lines[annotation_id])
+    }
+
+    report() {
+        this.collector.report()
+    }
+}
+
+var qoverage_global_collector = new QoverageCollector(get_filename(), include_lines, ids_to_lines, n_lines)
+
+
+// Functions below are called from instrumented QML
 
 function trace_obj_create(id) {
-    tracked_coverage.trace(id)
+    qoverage_global_collector.trace(id)
 }
 
 function trace_exec_block(id) {
-    tracked_coverage.trace(id)
+    qoverage_global_collector.trace(id)
 }
