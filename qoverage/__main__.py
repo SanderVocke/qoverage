@@ -103,23 +103,31 @@ def collect(input, maybe_cmd, files_path, report, maybe_strip_paths_expr, logger
             print(line, end='')
             lines.append(line)
         p.wait()
+
+    norm_files_path = os.path.normpath(os.path.abspath(files_path))
     
     # Collect coverage data from the logs/dump.
-    # Transform filenames so that they point to absolute, normalized paths that
-    # exist on the filesystem.
-    filename_transform_fn = lambda x: os.path.normpath(os.path.abspath(x))
-    if maybe_strip_paths_expr:
-        filename_transform_fn = lambda x: os.path.normpath(os.path.abspath(re.sub(maybe_strip_paths_expr, '', x)))
-    coverages = parse_coverage(lines, filename_transform_fn)
+    def filename_transform(f):
+        # Transform filenames from the log data to the files as will be reported.
+        rval = f
+        if maybe_strip_paths_expr:
+            rval = re.sub(maybe_strip_paths_expr, norm_files_path, rval)
+        rval = os.path.normpath(os.path.abspath(rval))
+        return rval.replace(norm_files_path, '')
+    
+    coverages = parse_coverage(lines, filename_transform)
+
     # Put 0 coverage data for files that were not collected
-    all_tracked_files = [os.path.normpath(os.path.abspath(g)) for g in glob.glob('{}/**/*.qoverage.js'.format(basedir), recursive=True)]
-    full_base = os.path.normpath(os.path.abspath(basedir))
-    for tracked_file_db in all_tracked_files:
-        tracked_file = tracked_file_db.replace('.qoverage.js', '')
-        name_in_report = tracked_file if not maybe_replace_basedir else tracked_file.replace(full_base, maybe_replace_basedir)
-        if not tracked_file in coverages:
-            logger.debug('File was never loaded: {}. Inserting 0 coverage.'.format(tracked_file))
-            with open(tracked_file_db, 'r') as f:
+    instrumentation_js_libs = [os.path.normpath(os.path.abspath(g)) for g in glob.glob('{}/**/*.qoverage.js'.format(norm_files_path), recursive=True)]
+    for instrumentation_js in instrumentation_js_libs:
+        tracked_file = instrumentation_js.replace('.qoverage.js', '')
+        name_in_report = tracked_file.replace(norm_files_path, '')
+        if not name_in_report in coverages:
+            logger.warning('File was never loaded: {}. Inserting 0 coverage.'.format(tracked_file))
+            
+            # Parse the instrumentation JS to find some info such as the amount of lines and
+            # which lines are eligible for tracking. Use that to create a 0 coverage report.
+            with open(instrumentation_js, 'r') as f:
                 contents = f.read()
                 
                 n_lines = None
@@ -149,13 +157,12 @@ def collect(input, maybe_cmd, files_path, report, maybe_strip_paths_expr, logger
                 coverages[name_in_report] = json.dumps(this_file_cov)
 
     # Write coverage reports
-    reported_base = full_base if not maybe_replace_basedir else maybe_replace_basedir
-    report = generate_report(coverages, reported_base)
-    logger.debug('Coverage report: {}'.format(report))
+    report_contents = generate_report(coverages)
+    logger.debug('Coverage report: {}'.format(report_contents))
     
-    logger.info('Writing coverage report to {}'.format(os.path.abspath(report_filename)))
-    with open(report_filename, 'w') as f:
-        f.write(report)
+    logger.info('Writing coverage report to {}'.format(os.path.abspath(report)))
+    with open(report, 'w') as f:
+        f.write(report_contents)
 
 def restore(path, logger):
     backups = glob.glob('{}/**/*.qoverage.bkp'.format(path), recursive=True)
