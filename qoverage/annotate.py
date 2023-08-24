@@ -135,7 +135,7 @@ def pre_annotate(contents, qmldom : QMLDom = None, debug=False) -> str:
         handle_obj(obj)
     
     result = apply_annotations()
-    logger.debug('Pre-annotated:\n{}'.format(result))
+    #logger.debug('Pre-annotated:\n{}'.format(result))
     return result
 
 def generate_db_js(db, n_lines, debug=False):
@@ -246,5 +246,5 @@ def final_annotate(pre_annotated: str, db_lib_name: str, debug=False) -> str:
         result
     )
 
-    logger.debug('Fully annotated:\n{}'.format(result))
+    #logger.debug('Fully annotated:\n{}'.format(result))
     return result, db_js
