@@ -84,7 +84,10 @@ def instrument(args, logger, debug):
             logger.error('Failed to instrument {}: {}. Skipping.'.format(qml_file, e))
             continue
     
-def collect(input, maybe_cmd, files_path, report, maybe_strip_paths_expr, logger):
+def collect(input, maybe_cmd, files_path, report, maybe_strip_paths_expr, maybe_prefix, logger):
+    if not maybe_prefix:
+        maybe_prefix = ''
+    
     if maybe_cmd and input:
         raise Exception("Both a filename and a command were passed. Parsing can be done either on a file or on the output of a command, but not both.")
     if not maybe_cmd and not input:
@@ -113,7 +116,7 @@ def collect(input, maybe_cmd, files_path, report, maybe_strip_paths_expr, logger
         if maybe_strip_paths_expr:
             rval = re.sub(maybe_strip_paths_expr, norm_files_path, rval)
         rval = os.path.normpath(os.path.abspath(rval))
-        return rval.replace(norm_files_path, '')
+        return maybe_prefix + rval.replace(norm_files_path, '')
     
     coverages = parse_coverage(lines, filename_transform)
 
@@ -121,9 +124,9 @@ def collect(input, maybe_cmd, files_path, report, maybe_strip_paths_expr, logger
     instrumentation_js_libs = [os.path.normpath(os.path.abspath(g)) for g in glob.glob('{}/**/*.qoverage.js'.format(norm_files_path), recursive=True)]
     for instrumentation_js in instrumentation_js_libs:
         tracked_file = instrumentation_js.replace('.qoverage.js', '')
-        name_in_report = tracked_file.replace(norm_files_path, '')
+        name_in_report = maybe_prefix + tracked_file.replace(norm_files_path, '')
         if not name_in_report in coverages:
-            logger.warning('File was never loaded: {}. Inserting 0 coverage.'.format(tracked_file))
+            logger.warning('File was never loaded: {}. Inserting 0 coverage.'.format(name_in_report))
             
             # Parse the instrumentation JS to find some info such as the amount of lines and
             # which lines are eligible for tracking. Use that to create a 0 coverage report.
@@ -207,6 +210,7 @@ def main():
         collect_parser.add_argument('-v', '--verbose', action='store_true', help='Print debug messages')
         collect_parser.add_argument('-s', '--strip-paths-expr', help='Regular expression which is applied to the paths in the parsed log file. The matching part is stripped from the path, then replaced by --files-path in order to find the actual files. Useful if --files-path does not match the original location where data was collected (e.g. when Qoverage collect runs in a container). Note that the resulting path should lead to files that actually exist on the filesystem.')
         collect_parser.add_argument('-i', '--input', help='The input file containing dumped qoverage information (e.g. a stdout log). The file will be parsed for coverage results.')
+        collect_parser.add_argument('-p', '--report-prefix', help='Final prefix added to the filenames in the report. Affects reporting only - files do not need to exist on the filesystem under this path.')
 
         my_args = sys.argv[1:]
         maybe_command = None
@@ -233,7 +237,7 @@ def main():
             instrument(args, logger, debug=args.debug_code)
             return
         elif args.command == 'collect':
-            collect(args.input, maybe_command, args.files_path, args.report, args.strip_paths_expr, logger)
+            collect(args.input, maybe_command, args.files_path, args.report, args.strip_paths_expr, args.report_prefix, logger)
             return
         elif args.command == 'restore':
             if maybe_command:
