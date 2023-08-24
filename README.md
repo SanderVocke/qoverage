@@ -1,11 +1,7 @@
 # qoverage
 Simple code coverage for QML
 
-(note: not working yet, WIP)
-
-Qoverage is a tool to generate a simple code coverage report for QML files.
-
-It leverages Qt6's built-in parser, qmldom.
+Qoverage is a tool to generate a simple code coverage report for QML files. It leverages Qt6's built-in parser, `qmldom`, to instrument QML files for coverage collection.
 
 The coverage generation process is as follows:
 
@@ -16,9 +12,13 @@ The coverage generation process is as follows:
 
 A Cobertura-style XML is generated.
 
+## Status
+
+The current state is pre-alpha. The basic workflow for coverage collection has been set up, but the instrumentation part is missing lots of Javascript statement types, hence the generated coverage will often be incorrect. This will be solved in the near future. First release is planned when the existing testcases are fully automated and passing.
+
 ## Qt requirements
 
-`qoverage` is meant to be used with Qt6. To instrument qml sources, it requires the `qmldom` tool from at least Qt6.5. However, the instrumented sources should still work with older Qt6 versons. See below for a way to to run `qoverage` instrumentaton on systems with a Qt6 older than 6.5.
+`qoverage` is meant to be used with Qt6. It may also work with earlier Qt versions (YMMV). To instrument qml sources, it requires the `qmldom` tool from at least Qt6.5. However, the instrumented sources should still work with older Qt6 versions. See below for a way to to run `qoverage` instrumentaton via a docker container to instrument pre-Qt6.5 code.
 
 ## Coverage model
 
@@ -60,4 +60,4 @@ For more information, see [file_tracker.template.js](qoverage/templates/file_tra
 
 ## Using qoverage from a container
 
-If your system has a pre-6.5 Qt6, you can just run Qoverage from a container which has the correct Qt6 version. Alternatively, you can pass a containerized command as the QMLDOM env variable such that qoverage will run the `qmldom` tool in a container.
+If your system has a pre-6.5 Qt6, you can just run Qoverage from a container which has the correct Qt6 version. The official image is [sandervocke/qoverage](https://hub.docker.com/r/sandervocke/qoverage). Alternatively, you can pass a containerized command as the QMLDOM env variable such that qoverage will run the `qmldom` tool in a container.

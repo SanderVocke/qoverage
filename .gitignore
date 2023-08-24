@@ -1,3 +1,4 @@
-.instrumenteddist
 **/__pycache__
-*.egg-info
+qoverage.egg-info
+build
+dist

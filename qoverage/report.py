@@ -5,7 +5,7 @@ import os
 
 logger = logging.getLogger('report')
 
-def generate_report(coverages, basedir):
+def generate_report(coverages):
 
     imp = xml.dom.minidom.DOMImplementation()
     doctype = imp.createDocumentType(
@@ -30,14 +30,14 @@ def generate_report(coverages, basedir):
     root.appendChild(sources)
     source = doc.createElement('source')
     sources.appendChild(source)
-    source_text = doc.createTextNode(basedir)
+    source_text = doc.createTextNode('.')
     source.appendChild(source_text)
 
     packages = doc.createElement('packages')
     root.appendChild(packages)
     package = doc.createElement('package')
     packages.appendChild(package)
-    package.setAttribute('name', basedir.replace('/', '.'))
+    package.setAttribute('name', '.')
     package.setAttribute('line-rate', '0.0')
     package.setAttribute('branch-rate', '0')
     package.setAttribute('complexity', '0')

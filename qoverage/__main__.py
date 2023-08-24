@@ -16,6 +16,7 @@ from .parse_coverage import parse_coverage
 
 def instrument(args, logger, debug):
     globs = args.glob
+    globs.extend(['{}/**/*.qml'.format(p) for p in args.path] if args.path else [])
     if not globs or len(globs) == 0:
         globs = ['./**/*.qml']
     def do_glob(path):
@@ -26,7 +27,7 @@ def instrument(args, logger, debug):
     # flatten
     qml_files = [item for sublist in qml_files for item in sublist]
     if len(qml_files) == 0:
-        logger.error('No QML files found. Please provide (a) globbing path(s) to the QML files with --path.')
+        logger.error('No QML files found. Please provide (a) globbing path(s) to the QML files with --path or --glob.')
         exit(1)
     logger.debug('QML files: {}'.format(qml_files))
     logger.info('Found {} QML files'.format(len(qml_files)))
@@ -66,6 +67,10 @@ def instrument(args, logger, debug):
             out_file = os.path.join(args.output_path, subpath)
         try:
             db_js_filename = out_file + '.qoverage.js'
+            # Touch the file so that it will be detected during collection, even if annotation
+            # fails
+            with open(db_js_filename, 'w') as f:
+                pass
             pre_annotated = pre_annotate(contents, qmldom, debug=debug)
             annotated,runtime_db_js = final_annotate(pre_annotated, os.path.basename(db_js_filename), debug=debug)
             with open(out_file, 'w') as f:
@@ -79,16 +84,19 @@ def instrument(args, logger, debug):
             logger.error('Failed to instrument {}: {}. Skipping.'.format(qml_file, e))
             continue
     
-def collect(maybe_filename, maybe_cmd, basedir, report_filename, logger):
-    if maybe_cmd and maybe_filename:
+def collect(input, maybe_cmd, files_path, report, maybe_strip_paths_expr, maybe_prefix, logger):
+    if not maybe_prefix:
+        maybe_prefix = ''
+    
+    if maybe_cmd and input:
         raise Exception("Both a filename and a command were passed. Parsing can be done either on a file or on the output of a command, but not both.")
-    if not maybe_cmd and not maybe_filename:
+    if not maybe_cmd and not input:
         raise Exception("Neither a filename nor a command were passed. Parsing can be done either on a file or on the output of a command.")
 
     lines = []
-    if maybe_filename:
-        logger.info('Parsing: {}'.format(maybe_filename))
-        with open(maybe_filename, 'r') as f:
+    if input:
+        logger.info('Parsing: {}'.format(input))
+        with open(input, 'r') as f:
             lines = f.readlines()
     elif maybe_cmd:
         logger.info('Running: {}'.format(' '.join(maybe_cmd)))
@@ -98,53 +106,72 @@ def collect(maybe_filename, maybe_cmd, basedir, report_filename, logger):
             print(line, end='')
             lines.append(line)
         p.wait()
+
+    norm_files_path = os.path.normpath(os.path.abspath(files_path))
     
-    # Run but record stdout for coverage reports
-    coverages = {}
-    coverages = parse_coverage(lines, coverages)
+    # Collect coverage data from the logs/dump.
+    def filename_transform(f):
+        # Transform filenames from the log data to the files as will be reported.
+        rval = f
+        if maybe_strip_paths_expr:
+            rval = re.sub(maybe_strip_paths_expr, norm_files_path, rval)
+        rval = os.path.normpath(os.path.abspath(rval))
+        return maybe_prefix + rval.replace(norm_files_path, '')
+    
+    coverages = parse_coverage(lines, filename_transform)
 
     # Put 0 coverage data for files that were not collected
-    all_tracked_files = glob.glob('{}/**/*.qoverage.js'.format(basedir), recursive=True)
-    for tracked_file_db in all_tracked_files:
-        tracked_file = tracked_file_db.replace('.qoverage.js', '')
-        if not tracked_file in coverages:
-            logger.debug('File was never loaded: {}. Inserting 0 coverage.'.format(tracked_file))
-            with open(tracked_file_db, 'r') as f:
-                contents = f.read()
+    instrumentation_js_libs = [os.path.normpath(os.path.abspath(g)) for g in glob.glob('{}/**/*.qoverage.js'.format(norm_files_path), recursive=True)]
+    for instrumentation_js in instrumentation_js_libs:
+        tracked_file = instrumentation_js.replace('.qoverage.js', '')
+        name_in_report = maybe_prefix + tracked_file.replace(norm_files_path, '')
+        if not name_in_report in coverages:
+            logger.warning('File was never loaded: {}. Inserting 0 coverage.'.format(name_in_report))
+            
+            n_lines = None
+            include_lines = None
+
+            try:
+                # Parse the instrumentation JS to find some info such as the amount of lines and
+                # which lines are eligible for tracking. Use that to create a 0 coverage report.
+                with open(instrumentation_js, 'r') as f:
+                    contents = f.read()
+
+                    match = re.search(r'const n_lines = (\d+)', contents)
+                    if not match:
+                        raise Exception('Could not find n_lines in file: {}'.format(tracked_file))
+                    try:
+                        n_lines = int(match.group(1))
+                    except Exception as e:
+                        raise Exception('Could not parse n_lines in file: {}'.format(str(e)))
+                    
+                    match = re.search(r'const include_lines = (.*)', contents)
+                    if not match:
+                        raise Exception('Could not find include_lines in file: {}'.format(tracked_file))
+                    try:
+                        include_lines = json.loads(match.group(1))
+                    except Exception as e:
+                        raise Exception('Could not parse include_lines in file: {}'.format(str(e)))
+            except Exception:
+                # Could not parse instrumentation lib. Assume all lines matter.
+                logger.warning('  -> Source was not correctly instrumented. Assuming all lines are eligible for tracking.')
+                with open(tracked_file, 'r') as f:
+                    n_lines = len(f.readlines())
+                    include_lines = list(range(n_lines))
+
+            this_file_cov = [None] * n_lines
+            for line in include_lines:
+                this_file_cov[line] = 0
                 
-                n_lines = None
-                include_lines = None
-
-                match = re.search(r'const n_lines = (\d+)', contents)
-                if not match:
-                    raise Exception('Could not find n_lines in file: {}'.format(tracked_file))
-                try:
-                    n_lines = int(match.group(1))
-                except Exception as e:
-                    raise Exception('Could not parse n_lines in file: {}'.format(str(e)))
-                
-                match = re.search(r'const include_lines = (.*)', contents)
-                if not match:
-                    raise Exception('Could not find include_lines in file: {}'.format(tracked_file))
-                try:
-                    include_lines = json.loads(match.group(1))
-                except Exception as e:
-                    raise Exception('Could not parse include_lines in file: {}'.format(str(e)))
-
-
-                this_file_cov = [None] * n_lines
-                for line in include_lines:
-                    this_file_cov[line] = 0
-                   
-                coverages[tracked_file] = json.dumps(this_file_cov)
+            coverages[name_in_report] = json.dumps(this_file_cov)
 
     # Write coverage reports
-    report = generate_report(coverages, basedir)
-    logger.debug('Coverage report: {}'.format(report))
+    report_contents = generate_report(coverages)
+    logger.debug('Coverage report: {}'.format(report_contents))
     
-    logger.info('Writing coverage report to {}'.format(os.path.abspath(report_filename)))
-    with open(report_filename, 'w') as f:
-        f.write(report)
+    logger.info('Writing coverage report to {}'.format(os.path.abspath(report)))
+    with open(report, 'w') as f:
+        f.write(report_contents)
 
 def restore(path, logger):
     backups = glob.glob('{}/**/*.qoverage.bkp'.format(path), recursive=True)
@@ -160,17 +187,11 @@ def restore(path, logger):
 
 def main():
     try:
-        QOVERAGE_LOGLEVEL = os.environ.get('QOVERAGE_LOGLEVEL', 'INFO').upper()
-        logging.basicConfig(
-            level=QOVERAGE_LOGLEVEL,
-            format='[%(name)s] [%(levelname)s] %(message)s'
-        )
-        logger = logging.getLogger('main')
-
         parser = argparse.ArgumentParser(
             prog="qoverage",
             description="Code coverage for QML"
         )
+        
         subparsers = parser.add_subparsers(help='sub-command help', dest='command')
 
         instrument_parser = subparsers.add_parser('instrument', help='Instrument QML files for code coverage')
@@ -182,35 +203,50 @@ def main():
         instrument_parser.add_argument('-s', '--store-intermediates', action='store_true', help='Store intermediate files in the output directory. This includes the pre-annotated QML files. This is useful for debugging.')
         instrument_parser.add_argument('-d', '--debug-code', action='store_true', help='Inject additional debug code which is useful for validating the instrumentation.')
         instrument_parser.add_argument('-n', '--no-backups', action='store_true', help='If running in-place instrumentation, usually qml files are backed up to .qoverage.bkp files. This flag disables that behavior.')
+        instrument_parser.add_argument('-p', '--path', action='append', help='Add QML file search path. Equivalent to --glob <path>/**/*.qml. Can be used multiple times.')
+        instrument_parser.add_argument('-v', '--verbose', action='store_true', help='Print debug messages')
 
         restore_parser = subparsers.add_parser('restore', help='Restore QML files backed up during in-place instrumentation.')
         restore_parser.add_argument('-p', '--path', help='Path to the directory containing the instrumented files. Default is ./')
+        restore_parser.add_argument('-v', '--verbose', action='store_true', help='Print debug messages')
 
         collect_parser = subparsers.add_parser('collect', help='Collect code coverage results into a report. Either use -f/--file for parsing a file, or add a separate command on the end with -- <CMD> to run a command and parse directly.')
+        collect_parser.add_argument('-f', '--files-path', help='Path to the directory containing the instrumented files. This path will be scanned for instrumented files which make up the report. Filenames in the report are also reported relative to this path.')
         collect_parser.add_argument('-r', '--report', default='coverage.xml', help='Path to the output coverage report file. Default is ./coverage.xml')
-        collect_parser.add_argument('-b', '--base' , default=os.path.abspath('.'), help='Base path for the coverage report, with respect to which the relative paths in the report are determined.')
-        collect_parser.add_argument('-f', '--file', help='Path to a file containing stdout from the instrumented QML application. The file will be parsed for coverage results.')
+        collect_parser.add_argument('-v', '--verbose', action='store_true', help='Print debug messages')
+        collect_parser.add_argument('-s', '--strip-paths-expr', help='Regular expression which is applied to the paths in the parsed log file. The matching part is stripped from the path, then replaced by --files-path in order to find the actual files. Useful if --files-path does not match the original location where data was collected (e.g. when Qoverage collect runs in a container). Note that the resulting path should lead to files that actually exist on the filesystem.')
+        collect_parser.add_argument('-i', '--input', help='The input file containing dumped qoverage information (e.g. a stdout log). The file will be parsed for coverage results.')
+        collect_parser.add_argument('-p', '--report-prefix', help='Final prefix added to the filenames in the report. Affects reporting only - files do not need to exist on the filesystem under this path.')
 
         my_args = sys.argv[1:]
-        remainder = None
+        maybe_command = None
         if '--' in my_args:
             separator_index = my_args.index('--')
-            remainder = my_args[separator_index+1:]
+            maybe_command = my_args[separator_index+1:]
             my_args = my_args[:separator_index]
 
         args = parser.parse_args(my_args)
+        
+        QOVERAGE_LOGLEVEL = os.environ.get('QOVERAGE_LOGLEVEL', 'INFO').upper()
+        if args.verbose:
+            QOVERAGE_LOGLEVEL = 'DEBUG'
+        logging.basicConfig(
+            level=QOVERAGE_LOGLEVEL,
+            format='[%(name)s] [%(levelname)s] %(message)s'
+        )
+        logger = logging.getLogger('main')
 
         if args.command == 'instrument':
-            if remainder:
+            if maybe_command:
                 logger.error('The instrument command does not take any additional arguments with a -- separator.')
                 exit(1)
             instrument(args, logger, debug=args.debug_code)
             return
         elif args.command == 'collect':
-            collect(args.file, remainder, args.base, args.report, logger)
+            collect(args.input, maybe_command, args.files_path, args.report, args.strip_paths_expr, args.report_prefix, logger)
             return
         elif args.command == 'restore':
-            if remainder:
+            if maybe_command:
                 logger.error('The restore command does not take any additional arguments with a -- separator.')
                 exit(1)
             if not args.path:
