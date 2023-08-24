@@ -128,36 +128,42 @@ def collect(input, maybe_cmd, files_path, report, maybe_strip_paths_expr, maybe_
         if not name_in_report in coverages:
             logger.warning('File was never loaded: {}. Inserting 0 coverage.'.format(name_in_report))
             
-            # Parse the instrumentation JS to find some info such as the amount of lines and
-            # which lines are eligible for tracking. Use that to create a 0 coverage report.
-            with open(instrumentation_js, 'r') as f:
-                contents = f.read()
+            n_lines = None
+            include_lines = None
+
+            try:
+                # Parse the instrumentation JS to find some info such as the amount of lines and
+                # which lines are eligible for tracking. Use that to create a 0 coverage report.
+                with open(instrumentation_js, 'r') as f:
+                    contents = f.read()
+
+                    match = re.search(r'const n_lines = (\d+)', contents)
+                    if not match:
+                        raise Exception('Could not find n_lines in file: {}'.format(tracked_file))
+                    try:
+                        n_lines = int(match.group(1))
+                    except Exception as e:
+                        raise Exception('Could not parse n_lines in file: {}'.format(str(e)))
+                    
+                    match = re.search(r'const include_lines = (.*)', contents)
+                    if not match:
+                        raise Exception('Could not find include_lines in file: {}'.format(tracked_file))
+                    try:
+                        include_lines = json.loads(match.group(1))
+                    except Exception as e:
+                        raise Exception('Could not parse include_lines in file: {}'.format(str(e)))
+            except Exception:
+                # Could not parse instrumentation lib. Assume all lines matter.
+                logger.warning('  -> Source was not correctly instrumented. Assuming all lines are eligible for tracking.')
+                with open(tracked_file, 'r') as f:
+                    n_lines = len(f.readlines())
+                    include_lines = list(range(n_lines))
+
+            this_file_cov = [None] * n_lines
+            for line in include_lines:
+                this_file_cov[line] = 0
                 
-                n_lines = None
-                include_lines = None
-
-                match = re.search(r'const n_lines = (\d+)', contents)
-                if not match:
-                    raise Exception('Could not find n_lines in file: {}'.format(tracked_file))
-                try:
-                    n_lines = int(match.group(1))
-                except Exception as e:
-                    raise Exception('Could not parse n_lines in file: {}'.format(str(e)))
-                
-                match = re.search(r'const include_lines = (.*)', contents)
-                if not match:
-                    raise Exception('Could not find include_lines in file: {}'.format(tracked_file))
-                try:
-                    include_lines = json.loads(match.group(1))
-                except Exception as e:
-                    raise Exception('Could not parse include_lines in file: {}'.format(str(e)))
-
-
-                this_file_cov = [None] * n_lines
-                for line in include_lines:
-                    this_file_cov[line] = 0
-                   
-                coverages[name_in_report] = json.dumps(this_file_cov)
+            coverages[name_in_report] = json.dumps(this_file_cov)
 
     # Write coverage reports
     report_contents = generate_report(coverages)
