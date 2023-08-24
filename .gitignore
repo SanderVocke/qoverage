@@ -1,5 +1,4 @@
-.instrumenteddist
 **/__pycache__
-*.egg-info
-**/*.egg_info/
-qoverage/qoverage.egg-info/dependency_links.txt qoverage/qoverage.egg-info/entry_points.txt qoverage/qoverage.egg-info/PKG-INFO qoverage/qoverage.egg-info/SOURCES.txt qoverage/qoverage.egg-info/top_level.txt
+qoverage.egg-info
+build
+dist

@@ -67,6 +67,10 @@ def instrument(args, logger, debug):
             out_file = os.path.join(args.output_path, subpath)
         try:
             db_js_filename = out_file + '.qoverage.js'
+            # Touch the file so that it will be detected during collection, even if annotation
+            # fails
+            with open(db_js_filename, 'w') as f:
+                pass
             pre_annotated = pre_annotate(contents, qmldom, debug=debug)
             annotated,runtime_db_js = final_annotate(pre_annotated, os.path.basename(db_js_filename), debug=debug)
             with open(out_file, 'w') as f:
@@ -80,16 +84,16 @@ def instrument(args, logger, debug):
             logger.error('Failed to instrument {}: {}. Skipping.'.format(qml_file, e))
             continue
     
-def collect(maybe_filename, maybe_cmd, basedir, maybe_replace_basedir, report_filename, logger):
-    if maybe_cmd and maybe_filename:
+def collect(input, maybe_cmd, files_path, report, maybe_strip_paths_expr, logger):
+    if maybe_cmd and input:
         raise Exception("Both a filename and a command were passed. Parsing can be done either on a file or on the output of a command, but not both.")
-    if not maybe_cmd and not maybe_filename:
+    if not maybe_cmd and not input:
         raise Exception("Neither a filename nor a command were passed. Parsing can be done either on a file or on the output of a command.")
 
     lines = []
-    if maybe_filename:
-        logger.info('Parsing: {}'.format(maybe_filename))
-        with open(maybe_filename, 'r') as f:
+    if input:
+        logger.info('Parsing: {}'.format(input))
+        with open(input, 'r') as f:
             lines = f.readlines()
     elif maybe_cmd:
         logger.info('Running: {}'.format(' '.join(maybe_cmd)))
@@ -100,10 +104,13 @@ def collect(maybe_filename, maybe_cmd, basedir, maybe_replace_basedir, report_fi
             lines.append(line)
         p.wait()
     
-    # Run but record stdout for coverage reports
-    coverages = {}
-    coverages = parse_coverage(lines, coverages)
-
+    # Collect coverage data from the logs/dump.
+    # Transform filenames so that they point to absolute, normalized paths that
+    # exist on the filesystem.
+    filename_transform_fn = lambda x: os.path.normpath(os.path.abspath(x))
+    if maybe_strip_paths_expr:
+        filename_transform_fn = lambda x: os.path.normpath(os.path.abspath(re.sub(maybe_strip_paths_expr, '', x)))
+    coverages = parse_coverage(lines, filename_transform_fn)
     # Put 0 coverage data for files that were not collected
     all_tracked_files = [os.path.normpath(os.path.abspath(g)) for g in glob.glob('{}/**/*.qoverage.js'.format(basedir), recursive=True)]
     full_base = os.path.normpath(os.path.abspath(basedir))
@@ -188,17 +195,17 @@ def main():
         restore_parser.add_argument('-v', '--verbose', action='store_true', help='Print debug messages')
 
         collect_parser = subparsers.add_parser('collect', help='Collect code coverage results into a report. Either use -f/--file for parsing a file, or add a separate command on the end with -- <CMD> to run a command and parse directly.')
+        collect_parser.add_argument('-f', '--files-path', help='Path to the directory containing the instrumented files. This path will be scanned for instrumented files which make up the report. Filenames in the report are also reported relative to this path.')
         collect_parser.add_argument('-r', '--report', default='coverage.xml', help='Path to the output coverage report file. Default is ./coverage.xml')
-        collect_parser.add_argument('-b', '--base' , default=os.path.abspath('.'), help='Base path for the coverage report, with respect to which the relative paths in the report are determined.')
-        collect_parser.add_argument('-f', '--file', help='Path to a file containing stdout from the instrumented QML application. The file will be parsed for coverage results.')
-        collect_parser.add_argument('-n', '--replace-base', help='In the report, pretend the source code files were found relative to the given base path.')
         collect_parser.add_argument('-v', '--verbose', action='store_true', help='Print debug messages')
+        collect_parser.add_argument('-s', '--strip-paths-expr', help='Regular expression which is applied to the paths in the parsed log file. The matching part is stripped from the path, then replaced by --files-path in order to find the actual files. Useful if --files-path does not match the original location where data was collected (e.g. when Qoverage collect runs in a container). Note that the resulting path should lead to files that actually exist on the filesystem.')
+        collect_parser.add_argument('-i', '--input', help='The input file containing dumped qoverage information (e.g. a stdout log). The file will be parsed for coverage results.')
 
         my_args = sys.argv[1:]
-        remainder = None
+        maybe_command = None
         if '--' in my_args:
             separator_index = my_args.index('--')
-            remainder = my_args[separator_index+1:]
+            maybe_command = my_args[separator_index+1:]
             my_args = my_args[:separator_index]
 
         args = parser.parse_args(my_args)
@@ -213,16 +220,16 @@ def main():
         logger = logging.getLogger('main')
 
         if args.command == 'instrument':
-            if remainder:
+            if maybe_command:
                 logger.error('The instrument command does not take any additional arguments with a -- separator.')
                 exit(1)
             instrument(args, logger, debug=args.debug_code)
             return
         elif args.command == 'collect':
-            collect(args.file, remainder, args.base, args.replace_base, args.report, logger)
+            collect(args.input, maybe_command, args.files_path, args.report, args.strip_paths_expr, logger)
             return
         elif args.command == 'restore':
-            if remainder:
+            if maybe_command:
                 logger.error('The restore command does not take any additional arguments with a -- separator.')
                 exit(1)
             if not args.path:
