@@ -15,7 +15,9 @@ from .report import generate_report
 from .parse_coverage import parse_coverage
 
 def instrument(args, logger, debug):
-    globs = args.glob
+    globs = args.glob if args.glob else []
+    if args.path and not args.glob_base:
+        args.glob_base = args.path[0]
     globs.extend(['{}/**/*.qml'.format(p) for p in args.path] if args.path else [])
     if not globs or len(globs) == 0:
         globs = ['./**/*.qml']
@@ -65,6 +67,7 @@ def instrument(args, logger, debug):
                 exit(1)
             subpath = os.path.relpath(os.path.abspath(qml_file), os.path.abspath(args.glob_base))
             out_file = os.path.join(args.output_path, subpath)
+            os.makedirs(os.path.dirname(out_file), exist_ok=True)
         try:
             db_js_filename = out_file + '.qoverage.js'
             # Touch the file so that it will be detected during collection, even if annotation
