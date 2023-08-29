@@ -1,3 +1,5 @@
+#!/bin/python
+
 import pytest
 import os
 import subprocess

@@ -86,13 +86,16 @@ def pre_annotate(contents, qmldom : QMLDom = None, debug=False) -> str:
         # The end depends on what we encounter on the way.
         for idx,stmt in enumerate(stmts):
             if node_is(stmt, 'ReturnStatement'):
+                # Place the end annotation just before the return statement.
+                # Execution will guarantee that we reached the return.
                 end_offset = token_offset(stmt, 'returnToken')
+
                 # this is where our block ends. However, also make a new
                 # block for anything that comes after this. It will never
                 # be executed, but should be tracked as coverage-eligible.
                 rest = stmts[idx+1:]
                 if len(rest) > 0:
-                    handle_stmts(stmts[idx+1:])
+                    handle_stmts(stmts[idx+1:], node_eval_start_offset(stmts[idx+1]))
                 break
             elif node_is(stmt, 'IfStatement'):
                 end_offset = token_offset(stmt, 'ifToken')
@@ -109,11 +112,14 @@ def pre_annotate(contents, qmldom : QMLDom = None, debug=False) -> str:
                 break
         
         if end_offset is None:
-            end_offset = token_offset(as_block, 'rbraceToken')
+            end_offset = token_offset(stmts[0], 'rbraceToken')
 
-        add_annotation(start_offset, start_exec_block_annotation(annotation_id))
-        add_annotation(end_offset, end_exec_block_annotation(annotation_id))
-        next_annotation()
+        if end_offset != None:
+            add_annotation(start_offset, start_exec_block_annotation(annotation_id))
+            add_annotation(end_offset, end_exec_block_annotation(annotation_id))
+            next_annotation()
+        else:
+            logger.warning('Skipping unsupported statement/expression of type {}'.format(stmts[0].nodeName))
 
     def handle_obj(obj):
         parent_definition = parent_as(obj, 'UiObjectDefinition')
@@ -127,9 +133,8 @@ def pre_annotate(contents, qmldom : QMLDom = None, debug=False) -> str:
                     next_annotation()
 
     for stmts in dom.getElementsByTagName('StatementList'):
-        as_block = parent_as(stmts, ['Block', 'FunctionDeclaration'])
-        if as_block:
-            handle_stmts(children_filter_nodes(stmts), token_offset(as_block, 'lbraceToken') + 1)
+        children_nodes = children_filter_nodes(stmts)
+        handle_stmts(children_nodes, node_eval_start_offset(children_nodes[0]))
     
     for obj in dom.getElementsByTagName('UiObjectInitializer'):
         handle_obj(obj)

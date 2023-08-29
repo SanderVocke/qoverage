@@ -85,6 +85,7 @@ def instrument(args, logger, debug):
                     f.write(pre_annotated)
         except Exception as e:
             logger.error('Failed to instrument {}: {}. Skipping.'.format(qml_file, e))
+            logger.debug(traceback.format_exc())
             continue
     
 def collect(input, maybe_cmd, files_path, report, maybe_strip_paths_expr, maybe_prefix, logger):

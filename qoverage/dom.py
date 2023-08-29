@@ -13,16 +13,16 @@ def parse_token_loc(loc: str):
         }
     return None
 
-def token_loc(node, token_name):
-    token = node.getAttribute(token_name)
+def token_loc(node, attribute):
+    token = node.getAttribute(attribute)
     if token:
         return parse_token_loc(token)
     return None
 
-def token_offset(node, token_name):
+def token_offset(node, token_name, add_length=False):
     loc = token_loc(node, token_name)
     if loc:
-        return loc['offset']
+        return (loc['offset'] if not add_length else loc['offset'] + loc['length'])
     return None
 
 def node_is(node, tag_name_or_names):
@@ -53,3 +53,31 @@ def children_filter_nodes(node):
         return None
     
     return [child(c) for c in node.childNodes if child(c)]
+
+def node_eval_start_offset(node):
+    def from_attrib(attrib, add_length=False):
+        return token_offset(node, attrib)
+    
+    per_node_type = {
+        'BreakStatement': lambda: from_attrib('breakToken'),
+        'ExpressionStatement': lambda: node_eval_start_offset(children_filter_nodes(node)[0]),
+        'CallExpression': lambda: node_eval_start_offset(children_filter_nodes(node)[0]),
+        'BinaryExpression': lambda: node_eval_start_offset(children_filter_nodes(node)[0]),
+        'FieldMemberExpression':  lambda: node_eval_start_offset(children_filter_nodes(node)[0]),
+        'IdentifierExpression': lambda: from_attrib('identifierToken'),
+        'NumericLiteral': lambda: from_attrib('literalToken'),
+        'ForStatement': lambda: from_attrib('forToken'),
+        'IfStatement': lambda: from_attrib('ifToken'),
+        'SwitchStatement': lambda: from_attrib('switchToken'),
+        'ReturnStatement': lambda: from_attrib('returnToken'),
+        # TODO Statement
+        # TODO ThrowStatement
+        # TODO TryStatement
+        # TODO VariableStatement
+        # TODO WhileStatement
+    }
+
+    if node.nodeName in per_node_type:
+        return per_node_type[node.nodeName]()
+
+    return None
