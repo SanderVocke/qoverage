@@ -10,6 +10,7 @@ RUN python -m build -w .
 
 FROM archlinux:latest
 COPY --from=build /qoverage/dist/qoverage-*.whl /
+RUN pacman -Syu --noconfirm
 RUN pacman -Sy --noconfirm python python-pip qt6-declarative
 RUN pip install --break-system-packages /*.whl
 RUN rm /*.whl
