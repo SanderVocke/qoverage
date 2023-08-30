@@ -2,6 +2,7 @@
    
 FROM archlinux:latest as build
 WORKDIR /
+RUN pacman -Syu --noconfirm
 RUN pacman -Sy --noconfirm python python-build
 COPY . /qoverage
 WORKDIR /qoverage
