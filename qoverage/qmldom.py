@@ -29,6 +29,10 @@ class QMLDom:
     def ast_dom(self, contents) -> xml.dom.minidom.Document:
         try:
             ast = self.ast(contents)
+
+            # Because of QTBUG-116618. This may be overkill, but haven't had failures with it so far.
+            ast = ast.replace(r'\"', '&quot;')
+
             try:
                 return xml.dom.minidom.parseString(ast)
             except Exception as e:

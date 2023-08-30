@@ -1,6 +1,5 @@
 import QtQuick 6.3                                                                     //COV:null
 import QtQuick.Controls 6.3                                                            //COV:null
-import QtQuick.Controls.Material 6.3                                                   //COV:null
                                                                                        //COV:null
 ApplicationWindow {                                                                    //COV:1
     visible: true                                                                      //COV:1

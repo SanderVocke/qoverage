@@ -1,6 +1,5 @@
 import QtQuick 6.3                         //COV:null
 import QtQuick.Controls 6.3                //COV:null
-import QtQuick.Controls.Material 6.3       //COV:null
                                            //COV:null
 import 'included.js' as Included           //COV:null
                                            //COV:null
