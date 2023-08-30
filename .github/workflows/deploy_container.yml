@@ -33,6 +33,7 @@ jobs:
         name: Build and push builder
         uses: docker/build-push-action@v4
         with:
+          no-cache: true
           context: .
           file: distribution/dockerfiles/qoverage.Dockerfile
           push: true
