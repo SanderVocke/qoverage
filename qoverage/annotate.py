@@ -188,6 +188,11 @@ def pre_annotate(contents, qmldom : QMLDom = None, debug=False) -> str:
                         add_annotation(start_offset, block_open_with_return_annotation(annotation_id))
                         add_annotation(end_offset, block_close_annotation(annotation_id))
                         next_annotation()
+                elif parent_as(node, 'UiPublicMember'):
+                    # These (e.g. property definitions) need the result value to be returned.
+                    add_annotation(start_offset, block_open_with_return_annotation(annotation_id))
+                    add_annotation(end_offset, block_close_annotation(annotation_id))
+                    next_annotation()
                 else:
                     add_annotation(start_offset, block_open_annotation(annotation_id))
                     add_annotation(end_offset, block_close_annotation(annotation_id))
