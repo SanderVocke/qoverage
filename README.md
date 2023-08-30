@@ -14,7 +14,13 @@ A Cobertura-style XML is generated.
 
 ## Status
 
-The current state is pre-alpha. The basic workflow for coverage collection has been set up, but the instrumentation part is missing lots of Javascript statement types, hence the generated coverage will often be incorrect. This will be solved in the near future. First release is planned when the existing testcases are fully automated and passing.
+The current state is pre-alpha. Some details:
+
+* The basic workflow for instrumenting, collecting and reporting is set up (see [run_example.py](test/run_example.py) for an example usage sequence).
+* The majority of Javascript syntax is implemented and tested (see the examples in [test/examples](test/examples))
+* There are known issues (see below).
+
+The basic workflow for coverage collection has been set up, but the instrumentation part is missing lots of Javascript statement types, hence the generated coverage will often be incorrect. This will be solved in the near future. First release is planned when the existing testcases are fully automated and passing.
 
 ## Qt requirements
 
@@ -30,12 +36,14 @@ For Javascript statements the line coverage is roughly as you would expect.
 
 For declarative QML parts, only the declaration line of each UI object is tracked, and coverage for that line incremented whenever an object of that declaration generates a Component.onCompleted event.
 
-Note that for the time being, the tool is not rigorously tested. False positives are very unlikely, but:
+Note that for the time being, the tool is not rigorously tested. False positives are very unlikely.
+
+## Known issues
 
 * False negatives may happen, either because of an incomplete instrumentation or because of the fact that Qoverage relies on the Application.aboutToQuit signal to dump its results. The timing of this event w.r.t. the rest of the application exiting is not completely known.
 * Double positives (multiple hits although only one real hit happened) may also happen because of different instrumentations overlapping on the same line.
-
-This is just a disclaimer in order to be aware and to look critically at the results. Regardless, for the purpose of "was this line ever executed", the exact amount of hits is irrelevant.
+* Imported Javascript files are currently not instrumented or included in the report, because `qmldom` does not support them. Working on a workaround solution for this. For now, unit tests were written for imported Javascript but these fail for the time being.
+* The coverage model assumes that blocks of non-branching statements will execute together. If an error is thrown somewhere during executing several statements, none of the statements have any coverage recorded. This is an accepted trade-off - catching these cases would require tracking coverage explicitly for every single line, which would decrease performance significantly.
 
 ## Collection
 
