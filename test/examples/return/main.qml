@@ -10,14 +10,14 @@ ApplicationWindow {                        // COV:1
     id: root                               // COV:null
                                            // COV:null
     Item {                                 // COV:1
-        anchors.fill: parent               // COV:null
+        anchors.fill: parent                // COV:null
                                            // COV:null
-        Component.onCompleted: {           // COV:1
+        Component.onCompleted: {           // COV:null
             quittimer.running = true       // COV:1
             console.log('a')               // COV:1
             return                         // COV:1
-            console.log('b')               // COV:null
-        }                                  // COV:1
+            console.log('b')               // COV:0
+        }                                  // COV:null
     }                                      // COV:null
                                            // COV:null
     Timer {                                // COV:null

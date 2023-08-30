@@ -111,10 +111,10 @@ def collect(input, maybe_cmd, files_path, report, maybe_strip_paths_expr, maybe_
             lines.append(line)
         p.wait()
 
-    norm_files_path = os.path.normpath(os.path.abspath(files_path))
+    norm_files_path = os.path.normpath(os.path.abspath(files_path)) + '/'
     
     # Collect coverage data from the logs/dump.
-    def filename_transform(f):
+    def filename_transform_to_reported(f):
         # Transform filenames from the log data to the files as will be reported.
         rval = f
         if maybe_strip_paths_expr:
@@ -122,7 +122,7 @@ def collect(input, maybe_cmd, files_path, report, maybe_strip_paths_expr, maybe_
         rval = os.path.normpath(os.path.abspath(rval))
         return maybe_prefix + rval.replace(norm_files_path, '')
     
-    coverages = parse_coverage(lines, filename_transform)
+    coverages = parse_coverage(lines, filename_transform_to_reported)
 
     # Put 0 coverage data for files that were not collected
     instrumentation_js_libs = [os.path.normpath(os.path.abspath(g)) for g in glob.glob('{}/**/*.qoverage.js'.format(norm_files_path), recursive=True)]

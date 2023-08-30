@@ -9,27 +9,27 @@ ApplicationWindow {                                                             
     title: "Test"                                                                      // COV:null
     id: root                                                                           // COV:null
                                                                                        // COV:null
-    Component.onCompleted: {                                                           // COV:1
+    Component.onCompleted: {                                                           // COV:null
         let test_var = true                                                            // COV:1
         if (test_var)                                                                  // COV:1
-        {                                                                              // COV:1
+        {                                                                              // COV:null
             console.log("test_var is true")                                            // COV:1
-        } else                                                                         // COV:1
-        {                                                                              // COV:0
+        } else                                                                         // COV:null
+        {                                                                              // COV:null
             console.log("nope")                                                        // COV:0
-        }                                                                              // COV:0
+        }                                                                              // COV:null
         if (test_var) {                                                                // COV:1
             console.log("test_var is true")                                            // COV:1
-        } else {                                                                       // COV:0
+        } else {                                                                       // COV:null
             console.log("nope")                                                        // COV:0
-        }                                                                              // COV:0
-        if (test_var) { console.log("test_var is true") } else { console.log("nope") } // COV:1
-        if (test_var)                                                                  // COV:0
+        }                                                                              // COV:null
+        if (test_var) { console.log("test_var is true") } else { console.log("nope") } // COV:2
+        if (test_var)                                                                  // COV:1
           console.log("test_var is true")                                              // COV:1
-        else                                                                           // COV:0
+        else                                                                           // COV:null
           console.log("nope")                                                          // COV:0
         quittimer.running = true                                                       // COV:1
-    }                                                                                  // COV:1
+    }                                                                                  // COV:null
                                                                                        // COV:null
     Timer {                                                                            // COV:null
         id: quittimer                                                                  // COV:null

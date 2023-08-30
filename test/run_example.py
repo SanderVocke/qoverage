@@ -22,11 +22,11 @@ print(f"Instrumenting:\n  -> {command}")
 subprocess.run(command, shell=True, check=True)
 
 # Run
-command = f"{QML} {output_dir}/main.qml &> {output_dir}/run.log"
+command = f"timeout 3s {QML} {output_dir}/main.qml &> {output_dir}/run.log"
 print(f"Running:\n  -> {command}")
 subprocess.run(command, shell=True, check=True)
 
 # Report
-command = f"{QOVERAGE} collect --report {output_dir}/report.xml --base {output_dir} --file {output_dir}/run.log"
+command = f"{QOVERAGE} collect --report {output_dir}/report.xml --files-path {output_dir} --input {output_dir}/run.log"
 print(f"Reporting:\n  -> {command}")
 subprocess.run(command, shell=True, check=True)

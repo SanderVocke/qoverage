@@ -33,8 +33,8 @@ class QoverageDefaultFileCollector {
         // Since this error is thrown in a signal handler, it will not
         // crash the app.
         throw new Error(
-            '<QOVERAGERESULT file="' + filename + '">' +
-                JSON.stringify(lines_data) +
+            '<QOVERAGERESULT file="' + this.filename + '">' +
+                JSON.stringify(this.line_states) +
                 '</QOVERAGERESULT>'
         )
     }

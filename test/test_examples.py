@@ -14,6 +14,8 @@ PYTHON = os.environ.get("PYTHON", "python")
 OPEN_DIFF_TOOL = os.environ.get("OPEN_DIFF_TOOL", None)
 
 all_examples = [os.path.basename(g) for g in glob.glob(os.path.join(script_dir, 'examples', '*'))]
+all_results_dir = None
+all_references_dir = None
 
 @pytest.mark.parametrize("example_name", all_examples)
 class TestClass:
@@ -49,10 +51,9 @@ class TestClass:
             raise Exception('Could not find and/or parse coverage report')
         
         for package in dom.getElementsByTagName('package'):
-            basename = package.getAttribute('name').replace('.', '/')
             for file in package.getElementsByTagName('class'):
 
-                filename = os.path.relpath(file.getAttribute('filename'), basename)
+                filename = file.getAttribute('filename')
 
                 reference_qml = os.path.join(script_dir, 'examples', example, filename)
                 reference_lines = None
@@ -71,7 +72,7 @@ class TestClass:
                     file_results[idx] = {}
                     file_results[idx]['reference_line'] = reference_lines[idx]
                     file_results[idx]['coverage'] = coverage[idx]
-                    file_results[idx]['line_idx'] = idx + 1
+                    file_results[idx]['line_idx'] = idx True+ 1
                     match = re.match(r'.*//\s*COV:([^\s]+)', reference_lines[idx])
                     if match:
                         expect_str = match.group(1)
@@ -94,16 +95,28 @@ class TestClass:
                 result = 'null' if line_results['coverage'] == None else str(line_results['coverage'])
                 compare_to += re.sub(r'(.*// COV:).*', r'\g<1>' + result, line_results['reference_line'])
             
-            temp_dir = None
             if compare_to != reference:
-                temp_dir = tempfile.mkdtemp(prefix=example + '_')
-                with open(os.path.join(temp_dir, 'reference.qml'), 'w') as f:
-                    f.write(reference)
-                with open(os.path.join(temp_dir, 'result.qml'), 'w') as f:
+                if all_results_dir == None:
+                    temp_dir = tempfile.mkdtemp()
+                    all_results_dir = temp_dir + '/results'
+                    all_references_dir = temp_dir + '/references'
+                resultdir = all_results_dir + '/' + example
+                refdir = all_references_dir + '/' + example
+                os.makedirs(resultdir, exist_ok=True)
+                os.makedirs(refdir, exist_ok=True)
+                try:
+                    os.symlink(os.path.join(refdir, file), os.path.join(script_dir, 'examples', example, file))
+                except Exception:
+                    with open(os.path.join(refdir, file), 'w') as f:
+                        f.write(reference)
+                with open(os.path.join(resultdir, file), 'w') as f:
                     f.write(compare_to)
 
-            self.request.node.resultfile = os.path.join(temp_dir, 'result.qml')
-            self.request.node.referencefile = os.path.join(temp_dir, 'reference.qml')
+                # For PyTest hooks
+                self.request.node.resultfile = os.path.join(temp_dir, 'result.qml')
+                self.request.node.referencefile = os.path.join(temp_dir, 'reference.qml')
+                self.request.node.resultsdir = all_results_dir
+                self.request.node.referencesdir = all_references_dir
 
             assert compare_to == reference, 'Coverage comparison failed. Output stored at {}, generated report at {}. Use OPEN_DIFF_TOOL=tool to open a diff view automatically.'.format(temp_dir, xmlfile)
 
