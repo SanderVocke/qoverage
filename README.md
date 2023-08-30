@@ -44,6 +44,7 @@ Note that for the time being, the tool is not rigorously tested. False positives
 * Double positives (multiple hits although only one real hit happened) may also happen because of different instrumentations overlapping on the same line.
 * Imported Javascript files are currently not instrumented or included in the report, because `qmldom` does not support them. Working on a workaround solution for this. For now, unit tests were written for imported Javascript but these fail for the time being.
 * The coverage model assumes that blocks of non-branching statements will execute together. If an error is thrown somewhere during executing several statements, none of the statements have any coverage recorded. This is an accepted trade-off - catching these cases would require tracking coverage explicitly for every single line, which would decrease performance significantly.
+* QMLDom sometimes fails to parse qml files. One instance noticed is that it cannot deal properly with escaped quote characters in string literals. Working on a workaround, and will also report this bug to Qt. For now, files that failed to parse are reported as having no coverage.
 
 ## Collection
 
