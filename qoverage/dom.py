@@ -92,6 +92,13 @@ def node_eval_start_offset(node):
         'ArrayMemberExpression': lambda: node_eval_start_offset(children_filter_nodes(node)[0]),
         'ArrayPattern': lambda: from_attrib(['lbracketToken', 'lbraketToken']),
         'FunctionExpression': lambda: from_attrib('functionToken'),
+        'TryStatement': lambda: from_attrib('tryToken'),
+        'NullExpression': lambda: from_attrib('nullToken'),
+        'ConditionalExpression': lambda: node_eval_start_offset(children_filter_nodes(node)[0]),
+        'ThrowStatement': lambda: from_attrib('throwToken'),
+        'NotExpression': lambda: from_attrib('notToken'),
+        'NestedExpression': lambda: from_attrib('lparenToken'),
+        'UnaryMinusExpression': lambda: from_attrib('minusToken'),
     }
 
     rval = None
@@ -128,6 +135,11 @@ def node_eval_end_offset(node):
         'ArrayMemberExpression': lambda: from_attrib(['rbracketToken', 'rbraketToken'], True),
         'ArrayPattern': lambda: from_attrib(['rbracketToken', 'rbraketToken'], True),
         'FunctionExpression': lambda: from_attrib('rbraceToken', True),
+        'NullExpression': lambda: from_attrib('nullToken', True),
+        'ConditionalExpression': lambda: node_eval_end_offset(children_filter_nodes(node)[-1]),
+        'NotExpression': lambda: node_eval_end_offset(children_filter_nodes(node)[-1]),
+        'NestedExpression': lambda: from_attrib('rparenToken', True),
+        'UnaryMinusExpression': lambda: node_eval_end_offset(children_filter_nodes(node)[-1]),
     }
 
     rval = None
@@ -155,6 +167,7 @@ def maybe_node_linear_execution_end_offset(node):
         'ThrowStatement': lambda: from_attrib('throwToken'),
         'ContinueStatement': lambda: from_attrib('continueToken'),
         'FunctionExpression': lambda: from_attrib('functionToken'),
+        'TryStatement': lambda: from_attrib('tryToken'),
     }
 
 
@@ -171,6 +184,8 @@ def node_executable_subnodes(node):
         'ForStatement': lambda: [ children_filter_nodes(node)[-1] ],
         'WhileStatement': lambda: [ children_filter_nodes(node)[1] ],
         'DoWhileStatement': lambda: [ children_filter_nodes(node)[0] ],
+        'TryStatement': lambda: children_filter_nodes(node),
+        'Catch': lambda: children_filter_nodes(node),
     }
 
     if node.nodeName in per_node_type:
