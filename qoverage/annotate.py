@@ -141,6 +141,12 @@ def pre_annotate(contents, qmldom : QMLDom = None, debug=False) -> str:
                 add_annotation(end_offset, end_exec_block_annotation(annotation_id))
                 next_annotation()
             
+            if len(rest_stmts) > 0 and rest_stmts[0].nodeName == 'Catch':
+                # Special handling of a catch (usually after a try just before):
+                # skip the catch for exec block analysis, just make sure to visit
+                # its child block.
+                children_to_visit.append(node_executable_subnodes(rest_stmts[0]))
+                rest_stmts = rest_stmts[1:]
             if len(rest_stmts) > 0:
                 # There are "left-over" statements after the point where our linear execution ended.
                 # Construct a statement list for the rest of the statements.
