@@ -86,6 +86,9 @@ def node_eval_start_offset(node):
         'TrueLiteral': lambda: from_attrib('trueToken'),
         'FalseLiteral': lambda: from_attrib('falseToken'),
         'StringLiteral': lambda: from_attrib('literalToken'),
+        'WhileStatement': lambda: from_attrib('whileToken'),
+        'PostIncrementExpression': lambda: node_eval_start_offset(children_filter_nodes(node)[0]),
+        'DoWhileStatement': lambda: from_attrib('doToken'),
     }
 
     rval = None
@@ -118,6 +121,7 @@ def node_eval_end_offset(node):
         'TrueLiteral': lambda: from_attrib('trueToken', True),
         'FalseLiteral': lambda: from_attrib('falseToken', True),
         'StringLiteral': lambda: from_attrib('literalToken', True),
+        'PostIncrementExpression': lambda: from_attrib('incrementToken', True),
     }
 
     rval = None
@@ -140,6 +144,8 @@ def maybe_node_linear_execution_end_offset(node):
         'IfStatement': lambda: from_attrib('ifToken'),
         'SwitchStatement': lambda: from_attrib('switchToken'),
         'ReturnStatement': lambda: from_attrib('returnToken'),
+        'WhileStatement': lambda: from_attrib('whileToken'),
+        'DoWhileStatement': lambda: from_attrib('doToken'),
     }
 
 
@@ -154,6 +160,8 @@ def node_executable_subnodes(node):
         'IfStatement': lambda: children_filter_nodes(node)[1:],
         'SwitchStatement': lambda: children_filter_nodes(node)[1:],
         'ForStatement': lambda: [ children_filter_nodes(node)[-1] ],
+        'WhileStatement': lambda: [ children_filter_nodes(node)[1] ],
+        'DoWhileStatement': lambda: [ children_filter_nodes(node)[0] ],
     }
 
     if node.nodeName in per_node_type:

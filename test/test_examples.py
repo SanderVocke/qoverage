@@ -72,7 +72,7 @@ class TestClass:
                     file_results[idx] = {}
                     file_results[idx]['reference_line'] = reference_lines[idx]
                     file_results[idx]['coverage'] = coverage[idx]
-                    file_results[idx]['line_idx'] = idx True+ 1
+                    file_results[idx]['line_idx'] = idx + 1
                     match = re.match(r'.*//\s*COV:([^\s]+)', reference_lines[idx])
                     if match:
                         expect_str = match.group(1)
@@ -96,6 +96,8 @@ class TestClass:
                 compare_to += re.sub(r'(.*// COV:).*', r'\g<1>' + result, line_results['reference_line'])
             
             if compare_to != reference:
+                global all_results_dir
+                global all_references_dir
                 if all_results_dir == None:
                     temp_dir = tempfile.mkdtemp()
                     all_results_dir = temp_dir + '/results'
@@ -105,7 +107,7 @@ class TestClass:
                 os.makedirs(resultdir, exist_ok=True)
                 os.makedirs(refdir, exist_ok=True)
                 try:
-                    os.symlink(os.path.join(refdir, file), os.path.join(script_dir, 'examples', example, file))
+                    os.symlink(os.path.join(script_dir, 'examples', example, file), os.path.join(refdir, file))
                 except Exception:
                     with open(os.path.join(refdir, file), 'w') as f:
                         f.write(reference)
