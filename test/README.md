@@ -10,7 +10,7 @@ For each testcase:
 * The QML files inside are instrumented to a temporary location using Qoverage;
 * The QT `qml` executable is used to run the instrumented `main.qml`;
 * It waits for the app to finish. Make sure your QML file is self-exiting (see the examples for how to use a Timer for this)
-* Coverage is collected and compared with the `// COV:xxx` comments in the source files.
+* Coverage is collected and compared with the `//COV:xxx` comments in the source files.
 * If they do not match, the test fails and you are pointed to a temporary folder where you can compare the results.
 
 To run a specific testcase:

@@ -19,6 +19,8 @@ def instrument(args, logger, debug):
     if args.path and not args.glob_base:
         args.glob_base = args.path[0]
     globs.extend(['{}/**/*.qml'.format(p) for p in args.path] if args.path else [])
+    globs.extend(['{}/**/*.js'.format(p) for p in args.path] if args.path else [])
+    globs.extend(['{}/**/*.mjs'.format(p) for p in args.path] if args.path else [])
     if not globs or len(globs) == 0:
         globs = ['./**/*.qml']
     def do_glob(path):
@@ -31,8 +33,10 @@ def instrument(args, logger, debug):
     if len(qml_files) == 0:
         logger.error('No QML files found. Please provide (a) globbing path(s) to the QML files with --path or --glob.')
         exit(1)
-    logger.debug('QML files: {}'.format(qml_files))
-    logger.info('Found {} QML files'.format(len(qml_files)))
+    logger.debug('Files to instrument: {}'.format(qml_files))
+    logger.info('Found {} QML files'.format(
+        len(qml_files)
+        ))
     
     qmldom_path = args.qmldom
     if not qmldom_path:
@@ -42,7 +46,7 @@ def instrument(args, logger, debug):
         logger.error("Could not find qmldom executable. Please provide the path manually with --qmldom.")
         exit(1)
     qmldom = QMLDom(qmldom_path)
-    
+
     for qml_file in qml_files:
         logger.debug('Pre-annotating: {}'.format(qml_file))
 

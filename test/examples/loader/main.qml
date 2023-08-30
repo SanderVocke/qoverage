@@ -9,10 +9,12 @@ ApplicationWindow {                        //COV:1
     title: "Test"                          //COV:1
     id: root                               //COV:null
                                            //COV:null
-    IncludedItem {}                        //COV:1
-                                           //COV:null
     Component.onCompleted: {               //COV:null
         quittimer.running = true           //COV:1
+    }                                      //COV:null
+                                           //COV:null
+    Loader {                               //COV:1
+        source: 'loaded.qml'               //COV:1
     }                                      //COV:null
                                            //COV:null
     Timer {                                //COV:null

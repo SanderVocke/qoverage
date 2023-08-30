@@ -146,6 +146,8 @@ def maybe_node_linear_execution_end_offset(node):
         'ReturnStatement': lambda: from_attrib('returnToken'),
         'WhileStatement': lambda: from_attrib('whileToken'),
         'DoWhileStatement': lambda: from_attrib('doToken'),
+        'ThrowStatement': lambda: from_attrib('throwToken'),
+        'ContinueStatement': lambda: from_attrib('continueToken'),
     }
 
 

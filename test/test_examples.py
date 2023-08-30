@@ -52,7 +52,6 @@ class TestClass:
         
         for package in dom.getElementsByTagName('package'):
             for file in package.getElementsByTagName('class'):
-
                 filename = file.getAttribute('filename')
 
                 reference_qml = os.path.join(script_dir, 'examples', example, filename)
@@ -73,7 +72,7 @@ class TestClass:
                     file_results[idx]['reference_line'] = reference_lines[idx]
                     file_results[idx]['coverage'] = coverage[idx]
                     file_results[idx]['line_idx'] = idx + 1
-                    match = re.match(r'.*//\s*COV:([^\s]+)', reference_lines[idx])
+                    match = re.match(r'.*//COV:([^\s]+)', reference_lines[idx])
                     if match:
                         expect_str = match.group(1)
                         if expect_str != 'null':
@@ -93,7 +92,7 @@ class TestClass:
 
             for idx,line_results in enumerate(results):
                 result = 'null' if line_results['coverage'] == None else str(line_results['coverage'])
-                compare_to += re.sub(r'(.*// COV:).*', r'\g<1>' + result, line_results['reference_line'])
+                compare_to += re.sub(r'(.*//COV:).*', r'\g<1>' + result, line_results['reference_line'])
             
             if compare_to != reference:
                 global all_results_dir

@@ -17,7 +17,7 @@ print(f"Using qml command: {QML}")
 print(f"Script dir: {script_dir}")
 
 # Instrument
-command = f"{QOVERAGE} instrument --store-intermediates --debug-code --glob {script_dir}/examples/{example}/**/*.qml --glob-base {script_dir}/examples/{example} --output-path {output_dir}"
+command = f"{QOVERAGE} instrument --store-intermediates --debug-code --path {script_dir}/examples/{example} --output-path {output_dir}"
 print(f"Instrumenting:\n  -> {command}")
 subprocess.run(command, shell=True, check=True)
 
