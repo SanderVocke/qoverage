@@ -89,6 +89,9 @@ def node_eval_start_offset(node):
         'WhileStatement': lambda: from_attrib('whileToken'),
         'PostIncrementExpression': lambda: node_eval_start_offset(children_filter_nodes(node)[0]),
         'DoWhileStatement': lambda: from_attrib('doToken'),
+        'ArrayMemberExpression': lambda: node_eval_start_offset(children_filter_nodes(node)[0]),
+        'ArrayPattern': lambda: from_attrib(['lbracketToken', 'lbraketToken']),
+        'FunctionExpression': lambda: from_attrib('functionToken'),
     }
 
     rval = None
@@ -122,6 +125,9 @@ def node_eval_end_offset(node):
         'FalseLiteral': lambda: from_attrib('falseToken', True),
         'StringLiteral': lambda: from_attrib('literalToken', True),
         'PostIncrementExpression': lambda: from_attrib('incrementToken', True),
+        'ArrayMemberExpression': lambda: from_attrib(['rbracketToken', 'rbraketToken'], True),
+        'ArrayPattern': lambda: from_attrib(['rbracketToken', 'rbraketToken'], True),
+        'FunctionExpression': lambda: from_attrib('rbraceToken', True),
     }
 
     rval = None
@@ -148,6 +154,7 @@ def maybe_node_linear_execution_end_offset(node):
         'DoWhileStatement': lambda: from_attrib('doToken'),
         'ThrowStatement': lambda: from_attrib('throwToken'),
         'ContinueStatement': lambda: from_attrib('continueToken'),
+        'FunctionExpression': lambda: from_attrib('functionToken'),
     }
 
 
