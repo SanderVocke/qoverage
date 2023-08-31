@@ -24,7 +24,7 @@ print(f"Instrumenting:\n  -> {command}")
 subprocess.run(command, shell=True, check=True)
 
 # Run
-command = f"timeout 3s {QML} {output_dir}/main.qml 2>&1 | tee {output_dir}/run.log"
+command = f"timeout 3s {QML} --verbose {output_dir}/main.qml 2>&1 | tee {output_dir}/run.log"
 print(f"Running:\n  -> {command}")
 subprocess.run(command, shell=True, check=True)
 if DUMP_RUN_LOG:
