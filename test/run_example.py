@@ -15,6 +15,7 @@ output_dir = tempfile.mkdtemp()
 print(f"Using qoverage command: {QOVERAGE}")
 print(f"Using qml command: {QML}")
 print(f"Script dir: {script_dir}")
+print(f"Working dir: {os.getcwd()}")
 
 # Instrument
 command = f"{QOVERAGE} instrument --store-intermediates --debug-code --path {script_dir}/examples/{example} --output-path {output_dir}"
