@@ -19,9 +19,16 @@ print(f"Script dir: {script_dir}")
 print(f"Working dir: {os.getcwd()}")
 
 # Instrument
-command = f"{QOVERAGE} instrument --store-intermediates --debug-code --path {script_dir}/examples/{example} --output-path {output_dir}"
+command = f"{QOVERAGE} instrument --store-intermediates --debug-code --path {script_dir}/examples/{example} --output-path {output_dir} 2>&1 | tee {output_dir}/instrument.log"
 print(f"Instrumenting:\n  -> {command}")
 subprocess.run(command, shell=True, check=True)
+if DUMP_RUN_LOG:
+    try:
+        with open(f"{output_dir}/instrument.log", 'r') as f:
+            print("Instrument log:")
+            print(f.read())
+    except Exception:
+        print("No instrument log was found.")
 
 # Run
 command = f"timeout 3s {QML} --verbose {output_dir}/main.qml 2>&1 | tee {output_dir}/run.log"
@@ -36,6 +43,13 @@ if DUMP_RUN_LOG:
         print("No run log was found.")
 
 # Report
-command = f"{QOVERAGE} collect --report {output_dir}/report.xml --files-path {output_dir} --input {output_dir}/run.log"
+command = f"{QOVERAGE} collect --report {output_dir}/report.xml --files-path {output_dir} --input {output_dir}/run.log 2>&1 | tee {output_dir}/report.log"
 print(f"Reporting:\n  -> {command}")
 subprocess.run(command, shell=True, check=True)
+if DUMP_RUN_LOG:
+    try:
+        with open(f"{output_dir}/report.log", 'r') as f:
+            print("Reporting log:")
+            print(f.read())
+    except Exception:
+        print("No reporting log was found.")
