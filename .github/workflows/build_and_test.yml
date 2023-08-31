@@ -1,0 +1,72 @@
+name: Build and test
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+  workflow_dispatch:
+    inputs:
+        dummy:
+            required: false
+            type: boolean
+
+permissions:
+  contents: read
+  checks: write
+
+jobs:
+  build_and_test:
+    runs-on: ubuntu-latest
+    container:
+      image: archlinux:latest
+      options: --user root --workdir /
+    steps:
+      - name: Update and install dependencies
+        run: |
+          pacman -Syu --noconfirm
+          pacman -Sy --noconfirm python python-pip python-pytest qt6-declarative coreutils nodejs npm python-build
+
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Get bundled qmldom from cache
+        id: cache-qmldom
+        uses: actions/cache@v3
+        with:
+          path: qoverage/bundled_qmldom/qmldom
+          key: qmldom-6.5.2
+
+      - name: Check qmldom
+        run: |
+          if [ ! -d qoverage/bundled_qmldom/qmldom ]; then exit 1; fi
+
+      - name: Build
+        run: |
+            python -m build -w .
+            cd dist && echo "wheel_filename=$(ls *.whl)" >> $GITHUB_ENV
+            echo "wheel_path=$(ls dist/*.whl)" >> $GITHUB_ENV
+
+      - name: Upload wheel
+        if: ${{ !env.ACT }}
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ env.wheel_filename }}
+          path: ${{ env.wheel_path }}
+      
+      - name: Install wheel
+        run: |
+          python -m pip install --break-system-packages dist/*.whl
+    
+      - name: Run Tests
+        run: |
+          QOVERAGE=qoverage DUMP_RUN_LOG=1 QT_QPA_PLATFORM=vnc QML=/usr/lib/qt6/bin/qml pytest test --junit-xml=pytest.xml
+
+      - name: Publish Python Test Report
+        if: ${{ !env.ACT }}
+        uses: mikepenz/action-junit-report@v3
+        with:
+            report_paths: pytest.xml
+            detailed_summary: true
+            include_passed: true
+            check_name: 'pytest'
