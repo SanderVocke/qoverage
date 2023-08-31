@@ -1,4 +1,4 @@
-name: Build and cache standalone qmldom tool
+name: Build standalone qmldom tool
 
 on:
   workflow_dispatch:
@@ -7,7 +7,7 @@ on:
         description: 'Force rebuild even if this version is already present in the cache.'
         required: false
         type: boolean
-        default: true    
+        default: true
 
 permissions:
   contents: read

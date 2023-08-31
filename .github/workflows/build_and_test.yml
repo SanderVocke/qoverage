@@ -25,21 +25,16 @@ jobs:
       - name: Update and install dependencies
         run: |
           pacman -Syu --noconfirm
-          pacman -Sy --noconfirm python python-pip python-pytest qt6-declarative coreutils nodejs npm python-build
+          pacman -Sy --noconfirm python python-pip python-pytest qt6-declarative coreutils nodejs npm python-build wget
 
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Get bundled qmldom from cache
-        id: cache-qmldom
-        uses: actions/cache@v3
-        with:
-          path: qoverage/bundled_qmldom/qmldom
-          key: qmldom-6.5.2
-
-      - name: Check qmldom
+      - name: Get bundled qmldom
         run: |
-          if [ ! -d qoverage/bundled_qmldom/qmldom ]; then exit 1; fi
+          wget https://github.com/SanderVocke/qoverage/releases/download/qmldom-6.5.2-v1.0.0/qmldom-3.6.2-linux-x64
+          mkdir -p qoverage/bundled_qmldom
+          mv qmldom-3.6.2-linux-x64 qoverage/bundled_qmldom/qmldom
 
       - name: Build
         run: |
