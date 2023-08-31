@@ -25,6 +25,12 @@ To list the available tests:
 pytest --collect-only
 ```
 
+There are tests which are expected to fail because of not-yet-implemented functionality. This is handled automatically by prefixing their example folder name by `_notworking_`.
+
+```
+pytest 
+```
+
 There is also an option to open a file diff tool right away on failure. You can use the `OPEN_DIFF_TOOL` env variable for this. E.g:
 
 ```

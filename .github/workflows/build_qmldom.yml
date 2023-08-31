@@ -1,4 +1,4 @@
-name: Build and cache standalone qmldom tool
+name: Build standalone qmldom tool
 
 on:
   workflow_dispatch:
@@ -8,13 +8,6 @@ on:
         required: false
         type: boolean
         default: true
-  workflow_call:
-    inputs:
-      force-rebuild:
-        description: 'Force rebuild even if this version is already present in the cache.'
-        required: false
-        type: boolean
-        default: false
 
 permissions:
   contents: read
@@ -30,7 +23,7 @@ jobs:
       - name: Cache apt packages
         uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: cmake ninja-build python3 gcc clang llvm-12 libclang-12-dev libgl1-mesa-dev libglu1-mesa-dev libicu-dev
+          packages: cmake ninja-build python3 gcc clang llvm-14 libclang-14-dev libgl1-mesa-dev libglu1-mesa-dev libicu-dev llvm-14-dev
 
       - name: Cache qmldom build
         id: cache-qmldom
@@ -38,15 +31,19 @@ jobs:
         with:
           path: qmldom
           key: qmldom-6.5.2
+
+      - name: Print cache status for qmldom
+        run: |
+          echo "Cache hit: ${{ steps.cache-qmldom.outputs.cache-hit }}"
            
-      - if: ${{ github.event.inputs.force-rebuild == 'true' || steps.cache-qmldom.outputs.cache-hit == 'false' }}
+      - if: ${{ github.event.inputs.force-rebuild == 'true' || steps.cache-qmldom.outputs.cache-hit != 'true' }}
         name: Download Qt sources
         run: |
             wget https://download.qt.io/official_releases/qt/6.5/6.5.2/single/qt-everywhere-src-6.5.2.tar.xz
             tar -xf qt-everywhere-src-6.5.2.tar.xz
             mv qt-everywhere-src-6.5.2 qt
     
-      - if: ${{ github.event.inputs.force-rebuild == 'true' || steps.cache-qmldom.outputs.cache-hit == 'false' }}
+      - if: ${{ github.event.inputs.force-rebuild == 'true' || steps.cache-qmldom.outputs.cache-hit != 'true' }}
         name: Configure Qt
         run: |
             mkdir qt-build
@@ -55,11 +52,17 @@ jobs:
             ls -la
             ls -la *
     
-      - if: ${{ github.event.inputs.force-rebuild == 'true' || steps.cache-qmldom.outputs.cache-hit == 'false' }}
+      - if: ${{ github.event.inputs.force-rebuild == 'true' || steps.cache-qmldom.outputs.cache-hit != 'true' }}
         name: Build Qt
         run: |
             cd qt-build
             cmake --build . --parallel 4 --target qmldom
             cp qtbase/bin/qmldom ../qmldom
+      
+      - name: Upload qmldom
+        uses: actions/upload-artifact@v2
+        with:
+          name: qmldom
+          path: qmldom
 
             

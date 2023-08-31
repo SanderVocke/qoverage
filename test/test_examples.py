@@ -14,10 +14,14 @@ PYTHON = os.environ.get("PYTHON", "python")
 OPEN_DIFF_TOOL = os.environ.get("OPEN_DIFF_TOOL", None)
 
 all_examples = [os.path.basename(g) for g in glob.glob(os.path.join(script_dir, 'examples', '*'))]
+all_examples_params = [
+    pytest.param(e, marks=pytest.mark.xfail()) if re.search(r'.*notworking.*', e) else e for e in all_examples
+]
+
 all_results_dir = None
 all_references_dir = None
 
-@pytest.mark.parametrize("example_name", all_examples)
+@pytest.mark.parametrize("example_name", all_examples_params)
 class TestClass:
 
     def test_example(self, example_name, request):
@@ -114,10 +118,8 @@ class TestClass:
                     f.write(compare_to)
 
                 # For PyTest hooks
-                self.request.node.resultfile = os.path.join(temp_dir, 'result.qml')
-                self.request.node.referencefile = os.path.join(temp_dir, 'reference.qml')
                 self.request.node.resultsdir = all_results_dir
                 self.request.node.referencesdir = all_references_dir
 
-            assert compare_to == reference, 'Coverage comparison failed. Output stored at {}, generated report at {}. Use OPEN_DIFF_TOOL=tool to open a diff view automatically.'.format(temp_dir, xmlfile)
+            assert compare_to == reference, 'Coverage comparison failed. Output stored at {}, references stored/linked at {}, generated report at {}. Use OPEN_DIFF_TOOL=tool to open a diff view automatically.'.format(all_results_dir, all_references_dir, xmlfile)
 

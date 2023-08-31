@@ -52,4 +52,4 @@ include = ["qoverage"]
 exclude = []
 
 [tool.setuptools.package-data]
-qoverage = ["templates/*"]
+qoverage = ["templates/*", "bundled_qmldom/qmldom"]
