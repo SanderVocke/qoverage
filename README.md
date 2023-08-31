@@ -17,14 +17,14 @@ A Cobertura-style XML is generated.
 The current state is pre-alpha. Some details:
 
 * The basic workflow for instrumenting, collecting and reporting is set up (see [run_example.py](test/run_example.py) for an example usage sequence).
-* The majority of Javascript syntax is implemented and tested (see the examples in [test/examples](test/examples))
+* A pretty solid subset of Javascript syntax is implemented and tested (see the examples in [test/examples](test/examples)). Unsupported syntax (see [TODO comments in dom.py](qoverage/dom.py) will usually lead to parts of code not being included in coverage analysis.
 * There are known issues (see below).
 
 The basic workflow for coverage collection has been set up, but the instrumentation part is missing lots of Javascript statement types, hence the generated coverage will often be incorrect. This will be solved in the near future. First release is planned when the existing testcases are fully automated and passing.
 
 ## Qt requirements
 
-`qoverage` is meant to be used with Qt6. It may also work with earlier Qt versions (YMMV). To instrument qml sources, it requires the `qmldom` tool from at least Qt6.5. However, the instrumented sources should still work with older Qt6 versions. See below for a way to to run `qoverage` instrumentaton via a docker container to instrument pre-Qt6.5 code.
+`qoverage` depends on the `qmldom` tool from Qt (>6.5.0). Because this is often hard to reconcile with system Qt packages, `qoverage`'s Python wheels come with a bundled, statically linked `qmldom` that doesn't require or interfere with any other Qt installation. Do note that tests are run against Qt6's `qml` binary, and there may be unforeseen issues in instrumenting/running, for example, Qt5 QML files. YMMV.
 
 ## Coverage model
 
@@ -44,7 +44,7 @@ Note that for the time being, the tool is not rigorously tested. False positives
 * Double positives (multiple hits although only one real hit happened) may also happen because of different instrumentations overlapping on the same line.
 * Imported Javascript files are currently not instrumented or included in the report, because `qmldom` does not support them. Working on a workaround solution for this. For now, unit tests were written for imported Javascript but these fail for the time being.
 * The coverage model assumes that blocks of non-branching statements will execute together. If an error is thrown somewhere during executing several statements, none of the statements have any coverage recorded. This is an accepted trade-off - catching these cases would require tracking coverage explicitly for every single line, which would decrease performance significantly.
-* QMLDom sometimes fails to parse qml files. One instance noticed is that it cannot deal properly with escaped quote characters in string literals. Working on a workaround, and will also report this bug to Qt. For now, files that failed to parse are reported as having no coverage.
+* QMLDom sometimes fails to parse qml files. These files are skipped for coverage analysis.
 
 ## Collection
 
