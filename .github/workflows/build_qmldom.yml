@@ -31,6 +31,10 @@ jobs:
         with:
           path: qmldom
           key: qmldom-6.5.2
+
+      - name: Print cache status for qmldom
+        run: |
+          echo "Cache hit: ${{ steps.cache-qmldom.outputs.cache-hit }}"
            
       - if: ${{ github.event.inputs.force-rebuild == 'true' || steps.cache-qmldom.outputs.cache-hit == 'false' }}
         name: Download Qt sources
