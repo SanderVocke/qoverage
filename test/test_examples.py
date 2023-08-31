@@ -118,8 +118,6 @@ class TestClass:
                     f.write(compare_to)
 
                 # For PyTest hooks
-                self.request.node.resultfile = os.path.join(temp_dir, 'result.qml')
-                self.request.node.referencefile = os.path.join(temp_dir, 'reference.qml')
                 self.request.node.resultsdir = all_results_dir
                 self.request.node.referencesdir = all_references_dir
 
