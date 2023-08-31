@@ -30,6 +30,7 @@ subprocess.run(command, shell=True, check=True)
 if DUMP_RUN_LOG:
     try:
         with open(f"{output_dir}/run.log", 'r') as f:
+            print("Run log:")
             print(f.read())
     except Exception:
         print("No run log was found.")
