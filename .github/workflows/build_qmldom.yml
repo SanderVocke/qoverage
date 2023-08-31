@@ -1,4 +1,4 @@
-name: Build and push Qoverage container
+name: Build and cache standalone qmldom tool
 
 on: workflow_dispatch
 
@@ -7,18 +7,32 @@ permissions:
   checks: write
 
 jobs:
-  build:
+  qmldom:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Build and push builder
-        uses: docker/build-push-action@v4
+      - name: Cache apt packages
+        uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          context: .
-          file: distribution/dockerfiles/qoverage.Dockerfile
-          push: true
-          tags: |
-            sandervocke/qoverage:latest
-            sandervocke/qoverage:${{ env.UNIQUETAG }}
+          packages: cmake ninja python3 gcc
+           
+      - name: Download Qt sources
+        run: |
+            wget https://download.qt.io/official_releases/qt/6.5/6.5.2/single/qt-everywhere-src-6.5.2.tar.xz
+            tar -xf qt-everywhere-src-6.5.2.tar.xz
+            mv qt-everywhere-src-6.5.2 qt
+    
+      - name: Configure Qt
+        run: |
+            cd qt
+            ./configure -static
+            ls -la
+            ls -la *
+    
+      - name: Build Qt
+        run: |
+            cd qt
+            echo cmake --build . --parallel 4
+            

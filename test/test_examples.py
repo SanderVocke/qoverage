@@ -121,5 +121,5 @@ class TestClass:
                 self.request.node.resultsdir = all_results_dir
                 self.request.node.referencesdir = all_references_dir
 
-            assert compare_to == reference, 'Coverage comparison failed. Output stored at {}, generated report at {}. Use OPEN_DIFF_TOOL=tool to open a diff view automatically.'.format(temp_dir, xmlfile)
+            assert compare_to == reference, 'Coverage comparison failed. Output stored at {}, references stored/linked at {}, generated report at {}. Use OPEN_DIFF_TOOL=tool to open a diff view automatically.'.format(all_results_dir, all_references_dir, xmlfile)
 
