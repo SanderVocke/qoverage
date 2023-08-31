@@ -56,7 +56,7 @@ jobs:
     
       - name: Run Tests
         run: |
-          QOVERAGE=qoverage DUMP_RUN_LOG=1 QT_QPA_PLATFORM=vnc QML=/usr/lib/qt6/bin/qml pytest test --junit-xml=pytest.xml
+          QOVERAGE_LOGLEVEL=debug QOVERAGE=qoverage DUMP_RUN_LOG=1 QT_QPA_PLATFORM=vnc QML=/usr/lib/qt6/bin/qml pytest test --junit-xml=pytest.xml
 
       - name: Publish Python Test Report
         if: ${{ !env.ACT }}
