@@ -80,11 +80,14 @@ def instrument(args, logger, debug):
                 pass
             pre_annotated = pre_annotate(contents, qmldom, debug=debug)
             annotated,runtime_db_js = final_annotate(pre_annotated, os.path.basename(db_js_filename), debug=debug)
+            logger.debug('Writing instrumented file to: {}'.format(out_file))
             with open(out_file, 'w') as f:
                 f.write(annotated)
+            logger.debug('Writing instrumentation companion JS library to: {}'.format(db_js_filename))
             with open(db_js_filename, 'w') as f:
                 f.write(runtime_db_js)
             if args.store_intermediates:
+                logger.debug('Writing intermediate (pre-annotated) file to: {}'.format(out_file + '.qoverage.pre'))
                 with open(out_file + '.qoverage.pre', 'w') as f:
                     f.write(pre_annotated)
         except Exception as e:
