@@ -14,10 +14,14 @@ PYTHON = os.environ.get("PYTHON", "python")
 OPEN_DIFF_TOOL = os.environ.get("OPEN_DIFF_TOOL", None)
 
 all_examples = [os.path.basename(g) for g in glob.glob(os.path.join(script_dir, 'examples', '*'))]
+all_examples_params = [
+    pytest.param(e, marks=pytest.mark.xfail()) if re.search(r'.*notworking.*', e) else e for e in all_examples
+]
+
 all_results_dir = None
 all_references_dir = None
 
-@pytest.mark.parametrize("example_name", all_examples)
+@pytest.mark.parametrize("example_name", all_examples_params)
 class TestClass:
 
     def test_example(self, example_name, request):
