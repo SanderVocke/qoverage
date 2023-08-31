@@ -14,6 +14,7 @@ ApplicationWindow {                                       //COV:1
         anchors.fill: parent                              //COV:1
                                                           //COV:null
         Component.onCompleted: {                          //COV:null
+            console.log('Hello World')                    //COV:1
             for (var i=0; i<10; i++)                      //COV:1
             {                                             //COV:null
                 console.log(i)                            //COV:10

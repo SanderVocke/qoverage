@@ -10,6 +10,7 @@ ApplicationWindow {                        //COV:1
                                            //COV:null
     QtObject {                             //COV:1
         Component.onCompleted: {           //COV:null
+            console.log('Hello World')     //COV:1
             quittimer.running = true       //COV:1
         }                                  //COV:null
     }                                      //COV:null

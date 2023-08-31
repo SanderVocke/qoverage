@@ -12,6 +12,7 @@ ApplicationWindow {                                       //COV:1
         anchors.fill: parent                              //COV:1
                                                           //COV:null
         Component.onCompleted: {                          //COV:null
+            console.log('Hello World')                    //COV:1
             let arr = [1, 2, 3, 4]                        //COV:1
             arr.forEach(                                  //COV:1
                 () => console.log("Hello World")          //COV:1

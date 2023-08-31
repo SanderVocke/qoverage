@@ -9,6 +9,7 @@ ApplicationWindow {                                                             
     id: root                                                                           //COV:null
                                                                                        //COV:null
     Component.onCompleted: {                                                           //COV:null
+        console.log('Hello World')                                                     //COV:1
         let test_var = true                                                            //COV:1
         if (test_var)                                                                  //COV:1
         {                                                                              //COV:null

@@ -15,6 +15,7 @@ ApplicationWindow {                                       //COV:1
         anchors.fill: parent                              //COV:1
                                                           //COV:null
         Component.onCompleted: {                          //COV:null
+            console.log('Hello World')                    //COV:1
             quittimer.running = true                      //COV:1
             let func = () => {                            //COV:1
                 console.log("Hello World")                //COV:1
