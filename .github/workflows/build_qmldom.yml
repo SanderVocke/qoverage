@@ -14,7 +14,7 @@ permissions:
   checks: write
 
 jobs:
-  qmldom:
+  linux_x64:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout

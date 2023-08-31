@@ -1,6 +1,7 @@
 import glob
 import os
 import logging
+import subprocess
 
 logger = logging.getLogger('find_qmldom')
 script_dir = os.path.dirname(os.path.realpath(__file__))
@@ -22,4 +23,14 @@ def find_qmldom() -> str:
     if len(candidates) == 0:
         return None
     logger.debug('qmldom candidates: {}'.format(candidates))
-    return candidates[0]
+    
+    for candidate in candidates:
+        # Try to run it, it may be e.g. for a different architecture
+        try:
+            subprocess.check_output([candidate, '--version'], stderr=subprocess.DEVNULL)
+            return candidate
+        except Exception as e:
+            logger.debug('qmldom candidate {} failed to run: {}. Trying next candidate.'.format(candidate, e))
+            continue
+    
+    logger.error('Did not find a suitable qmldom executable.')
