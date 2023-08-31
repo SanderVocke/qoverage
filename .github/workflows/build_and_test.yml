@@ -56,7 +56,15 @@ jobs:
     
       - name: Run Tests
         run: |
-          QOVERAGE_LOGLEVEL=debug QOVERAGE=qoverage DUMP_RUN_LOG=1 QT_QPA_PLATFORM=vnc QML=/usr/lib/qt6/bin/qml pytest test --junit-xml=pytest.xml
+          mkdir -p /tmp/generated
+          OUTPUT_DIR=/tmp/generated QOVERAGE_LOGLEVEL=debug QOVERAGE=qoverage DUMP_RUN_LOG=1 QT_QPA_PLATFORM=vnc QML=/usr/lib/qt6/bin/qml pytest test --junit-xml=pytest.xml
+
+      - name: Upload generated code
+        if: ${{ !env.ACT }}
+        uses: actions/upload-artifact@v3
+        with:
+          name: generated_code
+          path: /tmp/generated
 
       - name: Publish Python Test Report
         if: ${{ !env.ACT }}
