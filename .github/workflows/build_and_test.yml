@@ -39,8 +39,8 @@ jobs:
       - name: Build
         run: |
             python -m build -w .
-            cd dist && echo "wheel_filename=$(ls *.whl)" >> $GITHUB_ENV
-            echo "wheel_path=$(ls dist/*.whl)" >> $GITHUB_ENV
+            cd dist && echo "wheel_filename=$(ls *.whl)" | tee -a $GITHUB_ENV
+            echo "wheel_path=$(ls dist/*.whl)" | tee -a $GITHUB_ENV
 
       - name: Upload wheel
         if: ${{ !env.ACT }}
