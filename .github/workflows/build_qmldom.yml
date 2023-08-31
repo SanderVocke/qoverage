@@ -30,7 +30,7 @@ jobs:
       - name: Cache apt packages
         uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: cmake ninja-build python3 gcc clang llvm-12 libclang-12-dev libgl1-mesa-dev libglu1-mesa-dev libicu-dev
+          packages: cmake ninja-build python3 gcc clang llvm-12 libclang-12-dev libgl1-mesa-dev libglu1-mesa-dev libicu-dev llvm-12-dev
 
       - name: Cache qmldom build
         id: cache-qmldom
