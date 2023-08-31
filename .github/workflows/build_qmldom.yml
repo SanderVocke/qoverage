@@ -36,14 +36,14 @@ jobs:
         run: |
           echo "Cache hit: ${{ steps.cache-qmldom.outputs.cache-hit }}"
            
-      - if: ${{ github.event.inputs.force-rebuild == 'true' || steps.cache-qmldom.outputs.cache-hit == 'false' }}
+      - if: ${{ github.event.inputs.force-rebuild == 'true' || steps.cache-qmldom.outputs.cache-hit != 'true' }}
         name: Download Qt sources
         run: |
             wget https://download.qt.io/official_releases/qt/6.5/6.5.2/single/qt-everywhere-src-6.5.2.tar.xz
             tar -xf qt-everywhere-src-6.5.2.tar.xz
             mv qt-everywhere-src-6.5.2 qt
     
-      - if: ${{ github.event.inputs.force-rebuild == 'true' || steps.cache-qmldom.outputs.cache-hit == 'false' }}
+      - if: ${{ github.event.inputs.force-rebuild == 'true' || steps.cache-qmldom.outputs.cache-hit != 'true' }}
         name: Configure Qt
         run: |
             mkdir qt-build
@@ -52,7 +52,7 @@ jobs:
             ls -la
             ls -la *
     
-      - if: ${{ github.event.inputs.force-rebuild == 'true' || steps.cache-qmldom.outputs.cache-hit == 'false' }}
+      - if: ${{ github.event.inputs.force-rebuild == 'true' || steps.cache-qmldom.outputs.cache-hit != 'true' }}
         name: Build Qt
         run: |
             cd qt-build
