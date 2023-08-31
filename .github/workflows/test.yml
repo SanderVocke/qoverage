@@ -25,7 +25,7 @@ jobs:
       - name: Update and install dependencies
         run: |
             pacman -Syu --noconfirm
-            pacman -Sy --noconfirm python python-build python-pip python-pytest qt6-declarative
+            pacman -Sy --noconfirm python python-build python-pip python-pytest qt6-declarative coreutils
 
       - name: Checkout
         uses: actions/checkout@v3
