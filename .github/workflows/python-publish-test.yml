@@ -17,16 +17,6 @@ on:
         type: string
         required: true
 
-jobs:
-  release:
-    name: Deploy
-
-    steps:
-      - name: Checkout Repo
-        uses: actions/checkout@v2
-        with:
-          tag: ref/tags/${{ inputs.version }}
-
 permissions:
   contents: read
 
