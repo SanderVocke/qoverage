@@ -2,6 +2,7 @@
 Simple code coverage for QML
 
 [![codecov](https://codecov.io/github/SanderVocke/qoverage/graph/badge.svg?token=0lY7iGIRQ9)](https://codecov.io/github/SanderVocke/qoverage)
+![build](https://github.com/sandervocke/qoverage/actions/workflows/build_and_test.yml/badge.svg)
 
 Qoverage is a tool to generate a simple code coverage report for QML files. It leverages Qt6's built-in parser, `qmldom`, to instrument QML files for coverage collection.
 
