@@ -64,7 +64,7 @@ jobs:
         if: ${{ success() || failure() }}
         shell: bash
         run: |
-           QT_QPA_PLATFORM=vnc /usr/lib/qt6/bin/qml --verbose /tmp/generated/declarations/main.qml 2>&1
+           bash -c 'QT_QPA_PLATFORM=vnc /usr/lib/qt6/bin/qml --verbose /tmp/generated/declarations/main.qml 2>&1'
 
       - name: Upload generated code
         if: ${{ (success() || failure()) && !env.ACT }}
