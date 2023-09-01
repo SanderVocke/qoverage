@@ -202,6 +202,7 @@ def main():
             prog="qoverage",
             description="Code coverage for QML"
         )
+        parser.add_argument('-v', '--verbose', action='store_true', help='Print debug messages')
         
         subparsers = parser.add_subparsers(help='sub-command help', dest='command')
 
@@ -266,5 +267,4 @@ def main():
             return
         
     except Exception as e:
-        logger.error("Exception: " + str(e) + "\n" + traceback.format_exc())
-        exit()
+        raise Exception(str(e) + "\n" + traceback.format_exc())
