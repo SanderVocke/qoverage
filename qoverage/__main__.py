@@ -268,3 +268,6 @@ def main():
         
     except Exception as e:
         raise Exception(str(e) + "\n" + traceback.format_exc())
+
+if __name__ == '__main__':
+    main()

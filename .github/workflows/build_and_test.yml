@@ -61,11 +61,11 @@ jobs:
           QT_ASSUME_STDERR_HAS_CONSOLE=1
           OUTPUT_DIR=/tmp/generated
           QOVERAGE_LOGLEVEL=debug
-          QOVERAGE="python -m coverage run --append --source=qoverage -m qoverage"
+          QOVERAGE="python -m coverage run --append -m qoverage"
           DUMP_RUN_LOG=1
           QT_QPA_PLATFORM=vnc
           QML=/usr/lib/qt6/bin/qml
-          python -m coverage run --append --source=qoverage -m pytest test --junit-xml=pytest.xml
+          python -m coverage run --append -m pytest test --junit-xml=pytest.xml
       
       - name: Generate Pytest coverage report
         run: |
