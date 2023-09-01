@@ -31,12 +31,13 @@ if DUMP_RUN_LOG:
 command = f"timeout 3s {QML} --verbose {OUTPUT_DIR}/main.qml"
 print(f"Running:\n  -> {command}")
 r = subprocess.run(command, shell=True, check=True, stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
+log = r.stdout.decode()
 if DUMP_RUN_LOG:
     print("Run log:")
-    print(r.stdout.decode())
+    print(log)
 # Write the run log for the next step
 with open(f"{OUTPUT_DIR}/run.log", "w") as f:
-    f.write(r.stdout.decode())
+    f.write(log)
 
 # Report
 command = f"{QOVERAGE} collect --report {OUTPUT_DIR}/report.xml --files-path {OUTPUT_DIR} --input {OUTPUT_DIR}/run.log"

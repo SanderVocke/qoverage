@@ -111,7 +111,7 @@ def node_eval_start_offset(node):
         #'PatternElementList': TODO,
         #'PatternProperty': TODO,
         #'PatternPropertyList': TODO,
-        #'Elision': TODO,
+        #'Elision': TODO, // TESTED
         #'PropertyName': TODO,
         #'IdentifierPropertyName': TODO,
         #'StringLiteralPropertyName': TODO,
@@ -121,17 +121,17 @@ def node_eval_start_offset(node):
         #'NewMemberExpression': TODO,
         #'NewExpression': TODO,
         #'ArgumentList': TODO,
-        #'PostDecrementExpression': TODO,
+        #'PostDecrementExpression': TODO, // TESTED
         #'DeleteExpression': TODO,
         #'VoidExpression': TODO,
-        #'TypeOfExpression': TODO,
-        #'PreIncrementExpression': TODO,
-        #'PreDecrementExpression': TODO,
-        #'UnaryPlusExpression': TODO,
-        #'TildeExpression': TODO,
+        #'TypeOfExpression': TODO, // TESTED
+        #'PreIncrementExpression': TODO, // TESTED
+        #'PreDecrementExpression': TODO, // TESTED
+        #'UnaryPlusExpression': TODO, // TESTED
+        #'TildeExpression': TODO, //TESTED 
         #'Expression': TODO,
         #'YieldExpression': TODO,
-        #'Block': TODO,
+        'Block': lambda: from_attrib('lbraceToken'),
         #'LeftHandSideExpression': TODO,
         #'StatementList': TODO,
         #'VariableDeclarationList': TODO,
@@ -358,7 +358,7 @@ def maybe_node_linear_execution_end_offset(node):
         #'ConditionalExpression': TODO,
         #'Expression': TODO,
         #'YieldExpression': TODO,
-        #'Block': TODO,
+        'Block': lambda: from_attrib('lbraceToken'),
         #'LeftHandSideExpression': TODO,
         #'StatementList': TODO,
         #'VariableStatement': TODO,
@@ -462,7 +462,7 @@ def node_executable_subnodes(node):
         #'ConditionalExpression': TODO,
         #'Expression': TODO,
         #'YieldExpression': TODO,
-        #'Block': TODO,
+        'Block': lambda: children_filter_nodes(node),
         #'LeftHandSideExpression': TODO,
         #'StatementList': TODO,
         #'VariableStatement': TODO,
