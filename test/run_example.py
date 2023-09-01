@@ -12,6 +12,7 @@ QOVERAGE = os.environ.get("QOVERAGE", f"python {script_dir}/../qoverage.py")
 QML = os.environ.get("QML", "qml")
 DUMP_RUN_LOG = os.environ.get("DUMP_RUN_LOG", "0") != "0"
 OUTPUT_DIR = os.environ.get("OUTPUT_DIR", tempfile.mkdtemp())
+REPORT_XML = os.environ.get("REPORT_XML", f"{OUTPUT_DIR}/report.xml")
 
 print(f"Using qoverage command: {QOVERAGE}")
 print(f"Using qml command: {QML}")
@@ -19,29 +20,23 @@ print(f"Script dir: {script_dir}")
 print(f"Working dir: {os.getcwd()}")
 print(f"Output dir: {OUTPUT_DIR}")
 
-# Instrument
-command = f"{QOVERAGE} instrument --store-intermediates --debug-code --path {script_dir}/examples/{example} --output-path {OUTPUT_DIR}"
-print(f"Instrumenting:\n  -> {command}")
-r = subprocess.run(command, shell=True, check=True, stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
-if DUMP_RUN_LOG:
-    print("Instrument log:")
-    print(r.stdout.decode())
+def run_and_check(step, command, maybe_write_log=None):
+    print(f"{step}:\n  -> {command}")
+    r = subprocess.run(command, shell=True, stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
+    output = r.stdout.decode()
+    if r.returncode != 0:
+        print(f"{step} failed.")
+    if DUMP_RUN_LOG or r.returncode != 0:
+        print(f"{step} log:")
+        print(output)
+    if r.returncode != 0:
+        exit(r.returncode)
+    if maybe_write_log:
+        with open(maybe_write_log, "w") as f:
+            f.write(output)
 
-# Run
-command = f"timeout 3s {QML} --verbose {OUTPUT_DIR}/main.qml"
-print(f"Running:\n  -> {command}")
-r = subprocess.run(command, shell=True, check=True, stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
-if DUMP_RUN_LOG:
-    print("Run log:")
-    print(r.stdout.decode())
-# Write the run log for the next step
-with open(f"{OUTPUT_DIR}/run.log", "w") as f:
-    f.write(r.stdout.decode())
+run_and_check('Instrumentation', f"{QOVERAGE} instrument --store-intermediates --debug-code --path {script_dir}/examples/{example} --output-path {OUTPUT_DIR}")
 
-# Report
-command = f"{QOVERAGE} collect --report {OUTPUT_DIR}/report.xml --files-path {OUTPUT_DIR} --input {OUTPUT_DIR}/run.log"
-print(f"Reporting:\n  -> {command}")
-r = subprocess.run(command, shell=True, check=True, stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
-if DUMP_RUN_LOG:
-    print("Collect log:")
-    print(r.stdout.decode())
+run_and_check('Run', f"timeout 3s {QML} --verbose {OUTPUT_DIR}/main.qml", f"{OUTPUT_DIR}/run.log")
+
+run_and_check('Collect', f"{QOVERAGE} collect --files-path {OUTPUT_DIR} --input {OUTPUT_DIR}/run.log --report {REPORT_XML}")

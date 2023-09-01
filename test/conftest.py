@@ -11,8 +11,8 @@ def pytest_exception_interact(node, call, report):
 
     if report.failed \
         and hasattr(node, 'open_diff_tool') and node.open_diff_tool \
-        and hasattr(node, 'resultfile') and node.resultfile \
-        and hasattr(node, 'referencefile') and node.referencefile:
+        and hasattr(node, 'resultsdir') and node.resultsdir \
+        and hasattr(node, 'referencesdir') and node.referencesdir:
 
         results_dir = node.resultsdir
         references_dir = node.referencesdir

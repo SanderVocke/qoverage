@@ -37,10 +37,13 @@ class TestClass:
         
     def run(self, example):
         results = {}
+        report_xml = None
 
         try:
             env = os.environ.copy()
             env['OUTPUT_DIR'] = output_base_dir + '/' + example
+            report_xml = env['OUTPUT_DIR'] + '/report.xml'
+            env["REPORT_XML"] = report_xml
             os.makedirs(env['OUTPUT_DIR'], exist_ok=True)
             output = subprocess.check_output([
                     PYTHON,
@@ -55,14 +58,8 @@ class TestClass:
             raise e
         print(output)
         dom = None
-        xmlfile = None
-        for line in output.split('\n'):
-            match = re.match(r'.*Writing coverage report to (.*\.xml).*', line)
-            if match:
-                xmlfile = match.group(1)
-                with open(xmlfile, 'r') as f:
-                    dom = xml.dom.minidom.parseString(f.read())
-                    break
+        with open(report_xml, 'r') as f:
+            dom = xml.dom.minidom.parseString(f.read())
         if not dom:
             raise Exception('Could not find and/or parse coverage report')
         
@@ -102,14 +99,31 @@ class TestClass:
         for file, results in results.items():
             compare_to = ''
             reference = None
+            cov_marker_default_offset = None
 
             with open(os.path.join(script_dir, 'examples', example, file), 'r') as f:
                 reference = f.read()
+                first_line = reference.split('\n')[0]
+                match = re.search(r'//COV:([^\s]+)', first_line)
+                if match:
+                    cov_marker_default_offset = match.start()
 
             for idx,line_results in enumerate(results):
                 result = 'null' if line_results['coverage'] == None else str(line_results['coverage'])
-                compare_to += re.sub(r'(.*//COV:).*', r'\g<1>' + result, line_results['reference_line'])
-            
+                match = re.match(r'(.*//COV:).*', line_results['reference_line'])
+                if match:
+                    # Line already has a coverage marker in the reference, replace number by our result
+                    # for a nice side-by-side diff
+                    compare_to += re.sub(r'(.*//COV:).*', r'\g<1>' + result, line_results['reference_line'])
+                elif cov_marker_default_offset != None and len(line_results['reference_line'].rstrip()) < cov_marker_default_offset:
+                    # Reference line has no coverage marker, add one at the same offset as line 1
+                    ref = line_results['reference_line'].rstrip()
+                    n_spaces = cov_marker_default_offset - len(ref)
+                    compare_to += ref + ' ' * n_spaces + '//COV:' + result + '\n'
+                else:
+                    # No coverage marker on a long line, put it at the end
+                    compare_to += line_results['reference_line'].rstrip() + ' //COV:' + result + '\n'
+                    
             if compare_to != reference:
                 global all_results_dir
                 global all_references_dir
@@ -133,5 +147,5 @@ class TestClass:
                 self.request.node.resultsdir = all_results_dir
                 self.request.node.referencesdir = all_references_dir
 
-            assert compare_to == reference, 'Coverage comparison failed. Output stored at {}, references stored/linked at {}, generated report at {}. Use OPEN_DIFF_TOOL=tool to open a diff view automatically.'.format(all_results_dir, all_references_dir, xmlfile)
+            assert compare_to == reference, 'Coverage comparison failed. Output stored at {}, references stored/linked at {}, generated report at {}. Use OPEN_DIFF_TOOL=tool to open a diff view automatically.'.format(all_results_dir, all_references_dir, report_xml)
 
