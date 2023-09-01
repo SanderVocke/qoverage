@@ -91,7 +91,7 @@ def node_eval_start_offset(node):
         'DoWhileStatement': lambda: from_attrib('doToken'),
         'ArrayMemberExpression': lambda: node_eval_start_offset(children_filter_nodes(node)[0]),
         'ArrayPattern': lambda: from_attrib(['lbracketToken', 'lbraketToken']),
-        'FunctionExpression': lambda: from_attrib('functionToken'),
+        'FunctionExpression': lambda: None, # Note: TODO: file Qt bug, incorrect qmldom offsets here (see function properties in 'arrow' example)
         'TryStatement': lambda: from_attrib('tryToken'),
         'NullExpression': lambda: from_attrib('nullToken'),
         'ConditionalExpression': lambda: node_eval_start_offset(children_filter_nodes(node)[0]),
