@@ -11,7 +11,7 @@ The process of adding or fixing Javascript parsing/instrumenting issues is quite
 * Whether, if found in a statement list, this node would potentially end linear code execution. Examples: if, while, for, break, continue, yield, ...
 * Whether the node has any children that should also be visited. By default, if the start and end are known, children are skipped. Nodes with relevant children are e.g.: if/else, for, while, try, ...
 
-The ways to tell the above properties for each node are defined in the (dom.py)[qoverage/dom.py] file. All node types given by `qmldom` are already listed there, some are just commented out.
+The ways to tell the above properties for each node are defined in the [dom.py](qoverage/dom.py) file. All node types given by `qmldom` are already listed there, some are just commented out.
 
 ## Adding/changing Javascript analysis and testing
 
