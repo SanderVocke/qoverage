@@ -64,7 +64,7 @@ jobs:
         if: ${{ success() || failure() }}
         shell: bash
         run: |
-           QT_LOGGING_RULES="*.debug=true; qt.*.debug=false" QT_QPA_PLATFORM=vnc /usr/lib/qt6/bin/qml --verbose /tmp/generated/declarations/main.qml
+           QT_LOGGING_RULES="*.debug=true; qt.*.debug=false" QT_QPA_PLATFORM=vnc timeout 20s /usr/lib/qt6/bin/qml --verbose /tmp/generated/declarations/main.qml
 
       - name: Upload generated code
         if: ${{ (success() || failure()) && !env.ACT }}
