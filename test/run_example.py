@@ -31,7 +31,8 @@ if DUMP_RUN_LOG:
         print("No instrument log was found.")
 
 # Run
-command = f"timeout 3s {QML} --verbose {OUTPUT_DIR}/main.qml 2>&1 | tee {OUTPUT_DIR}/run.log"
+#command = f"timeout 3s {QML} --verbose {OUTPUT_DIR}/main.qml 2>&1 | tee {OUTPUT_DIR}/run.log"
+command = f"{QML} --verbose {OUTPUT_DIR}/main.qml 2>&1 | tee {OUTPUT_DIR}/run.log"
 print(f"Running:\n  -> {command}")
 subprocess.run(command, shell=True, check=True)
 if DUMP_RUN_LOG:
