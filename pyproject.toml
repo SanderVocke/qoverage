@@ -1,6 +1,6 @@
 [project]
 name = "qoverage"
-version = "0.1.3"
+version = "0.1.4"
 description = "Code coverage for QML"
 readme = "README.md"
 license = { "file" = "LICENSE" }
