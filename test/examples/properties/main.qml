@@ -17,6 +17,8 @@ ApplicationWindow {                                       //COV:1
     property var c: null                                  //COV:1
     property alias d: quittimer.running                   //COV:null
                                                           //COV:null
+    Label { text: 'hi' ; id: label }                      //COV:2
+                                                          //COV:null
     Timer {                                               //COV:null
         id: quittimer                                     //COV:null
         running: false                                    //COV:1
