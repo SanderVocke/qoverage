@@ -63,6 +63,9 @@ jobs:
         if: ${{ success() || failure() }}
         run: |
            QT_QPA_PLATFORM=offscreen /usr/lib/qt6/bin/qml --verbose /tmp/generated/declarations/main.qml
+           QT_QPA_PLATFORM=vnc /usr/lib/qt6/bin/qml /tmp/generated/declarations/main.qml
+           QT_QPA_PLATFORM=vnc /usr/lib/qt6/bin/qml --software /tmp/generated/declarations/main.qml
+           QT_QPA_PLATFORM=vnc /usr/lib/qt6/bin/qml --list-conf
 
       - name: Upload generated code
         if: ${{ (success() || failure()) && !env.ACT }}
