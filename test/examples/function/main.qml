@@ -23,11 +23,16 @@ ApplicationWindow {                                       //COV:1
         onTestSignal: (arg) => 'hello world: ' + arg      //COV:null
     }                                                     //COV:null
                                                           //COV:null
+    function testfunc(a, b) {                             //COV:null
+        console.log("funcy")                              //COV:1
+    }                                                     //COV:null
+                                                          //COV:null
     Item {                                                //COV:1
         anchors.fill: parent                              //COV:1
                                                           //COV:null
         Component.onCompleted: {                          //COV:null
             console.log('Hello World')                    //COV:1
+            testfunc(1, 2)                                //COV:1
             test1.testSignal('heyyy')                     //COV:1
             quittimer.running = true                      //COV:1
             let func = () => {                            //COV:1

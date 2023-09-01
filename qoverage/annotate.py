@@ -196,9 +196,14 @@ def pre_annotate(contents, qmldom : QMLDom = None, debug=False) -> str:
                         next_annotation()
                 elif parent_as(node, 'UiPublicMember'):
                     # These (e.g. property definitions) need the result value to be returned.
-                    add_annotation(start_offset, block_open_with_return_annotation(annotation_id))
-                    add_annotation(end_offset, block_close_annotation(annotation_id))
-                    next_annotation()
+                    # Exception is if the property is an alias, then it needs to directly reference
+                    # another property without instrumentation in-between.
+                    property_kind_node = children_filter_nodes(parent_as(node, 'UiPublicMember'))[0]
+                    is_alias = property_kind_node.nodeName == 'UiQualifiedId' and property_kind_node.getAttribute('name') == 'alias'
+                    if not is_alias:
+                        add_annotation(start_offset, block_open_with_return_annotation(annotation_id))
+                        add_annotation(end_offset, block_close_annotation(annotation_id))
+                        next_annotation()
                 else:
                     add_annotation(start_offset, block_open_annotation(annotation_id))
                     add_annotation(end_offset, block_close_annotation(annotation_id))

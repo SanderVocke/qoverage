@@ -16,13 +16,52 @@ ApplicationWindow {                                       //COV:1
         console.log('Hello World')                        //COV:1
         quittimer.running = true                          //COV:1
                                                           //COV:1
-        var a1 = null                                     //COV:1
-        var a2 = false ? 'b' : 'a'                        //COV:1
-        var a3 = !false                                   //COV:1
-        var a4 = 5                                        //COV:1
-        var a5 = -a4                                      //COV:1
-        var a6 = (true && false) || false                 //COV:1
-                                                          //COV:null
+        var i=0;                                          //COV:1
+        {                                                 //COV:1
+            var a1 = null                                 //COV:1
+        }                                                 //COV:null
+        {                                                 //COV:1
+            var a2 = false ? 'b' : 'a'                    //COV:1
+        }                                                 //COV:null
+        {                                                 //COV:1
+            var a3 = !false                               //COV:1
+        }                                                 //COV:null
+        {                                                 //COV:1
+            var a4 = 5                                    //COV:1
+        }                                                 //COV:null
+        {                                                 //COV:1
+            var a5 = -10                                  //COV:1
+        }                                                 //COV:null
+        {                                                 //COV:1
+            var a6 = (true && false) || false             //COV:1
+        }                                                 //COV:null
+        {                                                 //COV:1
+            var a7 = typeof quittimer                     //COV:1
+        }                                                 //COV:null
+        {                                                 //COV:1
+            var a8 = this                                 //COV:1
+        }                                                 //COV:null
+        {                                                 //COV:1
+            var a9 = [ 1, , 2]                            //COV:1
+        }                                                 //COV:null
+        {                                                 //COV:1
+            var a10 = +10                                 //COV:1
+        }                                                 //COV:null
+        {                                                 //COV:1
+            var a11 = ~i                                  //COV:1
+        }                                                 //COV:null
+        {                                                 //COV:1
+            var a10 = ++i                                 //COV:1
+        }                                                 //COV:null
+        {                                                 //COV:1
+            var a10 = i++                                 //COV:1
+        }                                                 //COV:null
+        {                                                 //COV:1
+            var a10 = --i                                 //COV:1
+        }                                                 //COV:null
+        {                                                 //COV:1
+            var a10 = i--                                 //COV:1
+        }                                                 //COV:null
     }                                                     //COV:null
                                                           //COV:null
     Timer {                                               //COV:null
