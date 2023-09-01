@@ -41,6 +41,7 @@ class TestClass:
         try:
             env = os.environ.copy()
             env['OUTPUT_DIR'] = output_base_dir + '/' + example
+            os.makedirs(env['OUTPUT_DIR'], exist_ok=True)
             output = subprocess.check_output([
                     PYTHON,
                     f"{script_dir}/run_example.py",

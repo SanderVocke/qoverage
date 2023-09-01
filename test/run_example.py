@@ -17,6 +17,7 @@ print(f"Using qoverage command: {QOVERAGE}")
 print(f"Using qml command: {QML}")
 print(f"Script dir: {script_dir}")
 print(f"Working dir: {os.getcwd()}")
+print(f"Output dir: {OUTPUT_DIR}")
 
 # Instrument
 command = f"{QOVERAGE} instrument --store-intermediates --debug-code --path {script_dir}/examples/{example} --output-path {OUTPUT_DIR} 2>&1 | tee {OUTPUT_DIR}/instrument.log"

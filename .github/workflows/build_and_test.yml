@@ -59,11 +59,6 @@ jobs:
           mkdir -p /tmp/generated
           OUTPUT_DIR=/tmp/generated QOVERAGE_LOGLEVEL=debug QOVERAGE=qoverage DUMP_RUN_LOG=1 QT_QPA_PLATFORM=vnc QML=/usr/lib/qt6/bin/qml pytest test --junit-xml=pytest.xml
       
-      - name: tst
-        if: ${{ success() || failure() }}
-        run: |
-           qoverage instrument --store-intermediates --debug-code --path /__w/qoverage/qoverage/test/examples/more-expressions --output-path /tmp/generated/tst 2>&1 | tee /tmp/generated/tst/instrument.log
-
       - name: Upload generated code
         if: ${{ (success() || failure()) && !env.ACT }}
         uses: actions/upload-artifact@v3
