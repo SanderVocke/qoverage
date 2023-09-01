@@ -187,7 +187,7 @@ def node_eval_end_offset(node):
     
     per_node_type = {
         'BreakStatement': lambda: from_attrib('breakToken', True),
-        'ExpressionStatement': lambda: node_eval_end_offset(children_filter_nodes(node)[-1]),
+        'ExpressionStatement': lambda: from_attrib('semicolonToken', True) if from_attrib('semicolonToken', True) else node_eval_end_offset(children_filter_nodes(node)[-1]),
         'CallExpression': lambda: from_attrib('rparenToken', True),
         'BinaryExpression': lambda: node_eval_end_offset(children_filter_nodes(node)[-1]),
         'FieldMemberExpression':  lambda: from_attrib(['identifierToken', 'identiferToken'], True),
