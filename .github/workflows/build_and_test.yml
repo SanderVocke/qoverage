@@ -55,19 +55,16 @@ jobs:
           python -m pip install --break-system-packages dist/*.whl
     
       - name: Run Tests
+        shell: bash
         run: |
           mkdir -p /tmp/generated
           OUTPUT_DIR=/tmp/generated QOVERAGE_LOGLEVEL=debug QOVERAGE=qoverage DUMP_RUN_LOG=1 QT_QPA_PLATFORM=vnc QML=/usr/lib/qt6/bin/qml pytest test --junit-xml=pytest.xml
       
       - name: tst
         if: ${{ success() || failure() }}
+        shell: bash
         run: |
-           QT_QPA_PLATFORM=offscreen /usr/lib/qt6/bin/qml --verbose /tmp/generated/declarations/main.qml
-           QT_QPA_PLATFORM=vnc /usr/lib/qt6/bin/qml /tmp/generated/declarations/main.qml
-           QT_QPA_PLATFORM=vnc /usr/lib/qt6/bin/qml --software /tmp/generated/declarations/main.qml
-           QT_QPA_PLATFORM=vnc /usr/lib/qt6/bin/qml --list-conf
-           QT_QPA_PLATFORM=vnc /usr/lib/qt6/bin/qml /tmp/generated/declarations/main.qml 2>&1 | tee /tmp/tst.txt
-           cat /tmp/tst.txt
+           QT_QPA_PLATFORM=vnc /usr/lib/qt6/bin/qml --verbose /tmp/generated/declarations/main.qml 2>&1
 
       - name: Upload generated code
         if: ${{ (success() || failure()) && !env.ACT }}
