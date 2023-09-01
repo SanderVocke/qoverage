@@ -31,7 +31,7 @@ jobs:
     - if: github.event_name == 'workflow_dispatch'
       uses: actions/checkout@v3
       with:
-        ref: ref/tags/${{ inputs.tag }}
+        ref: ref/tags/${{ inputs.from_tag }}
     - name: Set up Python
       uses: actions/setup-python@v3
       with:
