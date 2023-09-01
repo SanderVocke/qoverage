@@ -13,6 +13,7 @@ ApplicationWindow {                                       //COV:1
     property int an_int: an_array[1]                      //COV:1
                                                           //COV:null
     Component.onCompleted: {                              //COV:null
+        console.log('Hello World')                        //COV:1
         quittimer.running = true                          //COV:1
     }                                                     //COV:null
                                                           //COV:null

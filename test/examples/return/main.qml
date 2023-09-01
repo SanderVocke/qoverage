@@ -12,6 +12,7 @@ ApplicationWindow {                        //COV:1
         anchors.fill: parent               //COV:1
                                            //COV:null
         Component.onCompleted: {           //COV:null
+            console.log('Hello World')     //COV:1
             quittimer.running = true       //COV:1
             console.log('a')               //COV:1
             return                         //COV:1

@@ -21,6 +21,8 @@ all_examples_params = [
 all_results_dir = None
 all_references_dir = None
 
+output_base_dir = os.environ.get("OUTPUT_DIR", tempfile.mkdtemp())
+
 @pytest.mark.parametrize("example_name", all_examples_params)
 class TestClass:
 
@@ -37,7 +39,17 @@ class TestClass:
         results = {}
 
         try:
-            output = subprocess.check_output([PYTHON, f"{script_dir}/run_example.py", example], stderr=subprocess.STDOUT).decode('utf-8')
+            env = os.environ.copy()
+            env['OUTPUT_DIR'] = output_base_dir + '/' + example
+            os.makedirs(env['OUTPUT_DIR'], exist_ok=True)
+            output = subprocess.check_output([
+                    PYTHON,
+                    f"{script_dir}/run_example.py",
+                    example
+                ],
+                env=env,
+                stderr=subprocess.STDOUT
+            ).decode('utf-8')
         except subprocess.CalledProcessError as e:
             print(e.output.decode('utf-8'))
             raise e

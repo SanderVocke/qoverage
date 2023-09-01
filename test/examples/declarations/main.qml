@@ -9,6 +9,7 @@ ApplicationWindow {                        //COV:1
     id: root                               //COV:null
                                            //COV:null
     Component.onCompleted: {               //COV:null
+        console.log('Hello World')         //COV:1
         var j = 1                          //COV:1
         quittimer.running = true           //COV:1
         consts()                           //COV:1

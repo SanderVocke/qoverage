@@ -11,31 +11,37 @@ example = sys.argv[1]
 QOVERAGE = os.environ.get("QOVERAGE", f"python {script_dir}/../qoverage.py")
 QML = os.environ.get("QML", "qml")
 DUMP_RUN_LOG = os.environ.get("DUMP_RUN_LOG", "0") != "0"
-output_dir = tempfile.mkdtemp()
+OUTPUT_DIR = os.environ.get("OUTPUT_DIR", tempfile.mkdtemp())
 
 print(f"Using qoverage command: {QOVERAGE}")
 print(f"Using qml command: {QML}")
 print(f"Script dir: {script_dir}")
 print(f"Working dir: {os.getcwd()}")
+print(f"Output dir: {OUTPUT_DIR}")
 
 # Instrument
-command = f"{QOVERAGE} instrument --store-intermediates --debug-code --path {script_dir}/examples/{example} --output-path {output_dir}"
+command = f"{QOVERAGE} instrument --store-intermediates --debug-code --path {script_dir}/examples/{example} --output-path {OUTPUT_DIR}"
 print(f"Instrumenting:\n  -> {command}")
-subprocess.run(command, shell=True, check=True)
+r = subprocess.run(command, shell=True, check=True, stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
+if DUMP_RUN_LOG:
+    print("Instrument log:")
+    print(r.stdout.decode())
 
 # Run
-command = f"timeout 3s {QML} --verbose {output_dir}/main.qml 2>&1 | tee {output_dir}/run.log"
+command = f"timeout 3s {QML} --verbose {OUTPUT_DIR}/main.qml"
 print(f"Running:\n  -> {command}")
-subprocess.run(command, shell=True, check=True)
+r = subprocess.run(command, shell=True, check=True, stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
 if DUMP_RUN_LOG:
-    try:
-        with open(f"{output_dir}/run.log", 'r') as f:
-            print("Run log:")
-            print(f.read())
-    except Exception:
-        print("No run log was found.")
+    print("Run log:")
+    print(r.stdout.decode())
+# Write the run log for the next step
+with open(f"{OUTPUT_DIR}/run.log", "w") as f:
+    f.write(r.stdout.decode())
 
 # Report
-command = f"{QOVERAGE} collect --report {output_dir}/report.xml --files-path {output_dir} --input {output_dir}/run.log"
+command = f"{QOVERAGE} collect --report {OUTPUT_DIR}/report.xml --files-path {OUTPUT_DIR} --input {OUTPUT_DIR}/run.log"
 print(f"Reporting:\n  -> {command}")
-subprocess.run(command, shell=True, check=True)
+r = subprocess.run(command, shell=True, check=True, stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
+if DUMP_RUN_LOG:
+    print("Collect log:")
+    print(r.stdout.decode())

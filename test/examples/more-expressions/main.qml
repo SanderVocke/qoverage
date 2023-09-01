@@ -13,6 +13,7 @@ ApplicationWindow {                                       //COV:1
     property var t2: true ? 'a' : 'b'                     //COV:1
                                                           //COV:null
     Component.onCompleted: {                              //COV:null
+        console.log('Hello World')                        //COV:1
         quittimer.running = true                          //COV:1
                                                           //COV:1
         var a1 = null                                     //COV:1
