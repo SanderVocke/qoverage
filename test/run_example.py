@@ -20,37 +20,28 @@ print(f"Working dir: {os.getcwd()}")
 print(f"Output dir: {OUTPUT_DIR}")
 
 # Instrument
-command = f"{QOVERAGE} instrument --store-intermediates --debug-code --path {script_dir}/examples/{example} --output-path {OUTPUT_DIR} 2>&1 | tee {OUTPUT_DIR}/instrument.log"
+command = f"{QOVERAGE} instrument --store-intermediates --debug-code --path {script_dir}/examples/{example} --output-path {OUTPUT_DIR}"
 print(f"Instrumenting:\n  -> {command}")
-subprocess.run(command, shell=True, check=True)
+r = subprocess.run(command, shell=True, check=True, stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
 if DUMP_RUN_LOG:
-    try:
-        with open(f"{OUTPUT_DIR}/instrument.log", 'r') as f:
-            print("Instrument log:")
-            print(f.read())
-    except Exception:
-        print("No instrument log was found.")
+    print("Instrument log:")
+    print(r.stdout.decode())
 
 # Run
-command = f"timeout 3s {QML} --verbose {OUTPUT_DIR}/main.qml 2>&1 | tee {OUTPUT_DIR}/run.log"
+command = f"timeout 3s {QML} --verbose {OUTPUT_DIR}/main.qml"
 print(f"Running:\n  -> {command}")
-subprocess.run(command, shell=True, check=True)
+r = subprocess.run(command, shell=True, check=True, stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
 if DUMP_RUN_LOG:
-    try:
-        with open(f"{OUTPUT_DIR}/run.log", 'r') as f:
-            print("Run log:")
-            print(f.read())
-    except Exception:
-        print("No run log was found.")
+    print("Run log:")
+    print(r.stdout.decode())
+# Write the run log for the next step
+with open(f"{OUTPUT_DIR}/run.log", "w") as f:
+    f.write(r.stdout.decode())
 
 # Report
-command = f"{QOVERAGE} collect --report {OUTPUT_DIR}/report.xml --files-path {OUTPUT_DIR} --input {OUTPUT_DIR}/run.log 2>&1 | tee {OUTPUT_DIR}/report.log"
+command = f"{QOVERAGE} collect --report {OUTPUT_DIR}/report.xml --files-path {OUTPUT_DIR} --input {OUTPUT_DIR}/run.log"
 print(f"Reporting:\n  -> {command}")
-subprocess.run(command, shell=True, check=True)
+r = subprocess.run(command, shell=True, check=True, stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
 if DUMP_RUN_LOG:
-    try:
-        with open(f"{OUTPUT_DIR}/report.log", 'r') as f:
-            print("Reporting log:")
-            print(f.read())
-    except Exception:
-        print("No reporting log was found.")
+    print("Collect log:")
+    print(r.stdout.decode())
