@@ -101,7 +101,7 @@ def node_eval_start_offset(node):
         'UnaryMinusExpression': lambda: from_attrib('minusToken'),
         #'Statement': TODO,
         #'TypeExpression': TODO,
-        #'ThisExpression': TODO,
+        'ThisExpression': lambda: from_attrib('thisToken'),
         #'SuperLiteral': TODO,
         #'TemplateLiteral': TODO,
         #'RegExpLiteral': TODO,
@@ -111,7 +111,7 @@ def node_eval_start_offset(node):
         #'PatternElementList': TODO,
         #'PatternProperty': TODO,
         #'PatternPropertyList': TODO,
-        #'Elision': TODO, // TESTED
+        #'Elision': not needed
         #'PropertyName': TODO,
         #'IdentifierPropertyName': TODO,
         #'StringLiteralPropertyName': TODO,
@@ -121,14 +121,14 @@ def node_eval_start_offset(node):
         #'NewMemberExpression': TODO,
         #'NewExpression': TODO,
         #'ArgumentList': TODO,
-        #'PostDecrementExpression': TODO, // TESTED
+        'PostDecrementExpression': lambda: node_eval_start_offset(children_filter_nodes(node)[0]),
         #'DeleteExpression': TODO,
         #'VoidExpression': TODO,
-        #'TypeOfExpression': TODO, // TESTED
-        #'PreIncrementExpression': TODO, // TESTED
-        #'PreDecrementExpression': TODO, // TESTED
-        #'UnaryPlusExpression': TODO, // TESTED
-        #'TildeExpression': TODO, //TESTED 
+        'TypeOfExpression': lambda: from_attrib('typeofToken'),
+        'PreIncrementExpression': lambda: from_attrib('incrementToken'),
+        'PreDecrementExpression': lambda: from_attrib('decrementToken'),
+        'UnaryPlusExpression': lambda: from_attrib('plusToken'),
+        'TildeExpression': lambda: from_attrib('tildeToken'),
         #'Expression': TODO,
         #'YieldExpression': TODO,
         'Block': lambda: from_attrib('lbraceToken'),
@@ -211,7 +211,7 @@ def node_eval_end_offset(node):
         'UnaryMinusExpression': lambda: node_eval_end_offset(children_filter_nodes(node)[-1]),
         #'Statement': TODO,
         #'TypeExpression': TODO,
-        #'ThisExpression': TODO,
+        'ThisExpression': lambda: from_attrib('thisToken', True),
         #'SuperLiteral': TODO,
         #'TemplateLiteral': TODO,
         #'RegExpLiteral': TODO,
@@ -220,7 +220,7 @@ def node_eval_end_offset(node):
         #'PatternElementList': TODO,
         #'PatternProperty': TODO,
         #'PatternPropertyList': TODO,
-        #'Elision': TODO,
+        #'Elision': not needed
         #'PropertyName': TODO,
         #'IdentifierPropertyName': TODO,
         #'StringLiteralPropertyName': TODO,
@@ -230,17 +230,17 @@ def node_eval_end_offset(node):
         #'NewMemberExpression': TODO,
         #'NewExpression': TODO,
         #'ArgumentList': TODO,
-        #'PostDecrementExpression': TODO,
+        'PostDecrementExpression': lambda: from_attrib('decrementToken', True),
         #'DeleteExpression': TODO,
         #'VoidExpression': TODO,
-        #'TypeOfExpression': TODO,
-        #'PreIncrementExpression': TODO,
-        #'PreDecrementExpression': TODO,
-        #'UnaryPlusExpression': TODO,
-        #'TildeExpression': TODO,
+        'TypeOfExpression': lambda: node_eval_end_offset(children_filter_nodes(node)[-1]),
+        'PreIncrementExpression': lambda: node_eval_end_offset(children_filter_nodes(node)[-1]),
+        'PreDecrementExpression': lambda: node_eval_end_offset(children_filter_nodes(node)[-1]),
+        'UnaryPlusExpression': lambda: node_eval_end_offset(children_filter_nodes(node)[-1]),
+        'TildeExpression': lambda: node_eval_end_offset(children_filter_nodes(node)[-1]),
         #'Expression': TODO,
         #'YieldExpression': TODO,
-        #'Block': TODO,
+        #'Block': not needed
         #'LeftHandSideExpression': TODO,
         #'StatementList': TODO,
         #'EmptyStatement': TODO,
