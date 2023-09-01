@@ -270,4 +270,7 @@ def main():
         raise Exception(str(e) + "\n" + traceback.format_exc())
 
 if __name__ == '__main__':
+    import coverage
+    with open('/tmp/cov.txt', 'a') as f:
+        f.write('qoverage, {} {} {}\n'.format(os.environ.get('COVERAGE_PROCESS_START'), os.environ.get('COVERAGE_RUN'), os.environ.get("COVERAGE_FILE")))
     main()
