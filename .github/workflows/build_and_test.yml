@@ -61,14 +61,14 @@ jobs:
           OUTPUT_DIR=/tmp/generated QOVERAGE_LOGLEVEL=debug QOVERAGE=qoverage DUMP_RUN_LOG=1 QT_QPA_PLATFORM=vnc QML=/usr/lib/qt6/bin/qml pytest test --junit-xml=pytest.xml
 
       - name: Upload generated code
-        if: ${{ !env.ACT }}
+        if: ${{ (success() || failure()) && !env.ACT }}
         uses: actions/upload-artifact@v3
         with:
           name: generated_code
           path: /tmp/generated
 
       - name: Publish Python Test Report
-        if: ${{ !env.ACT }}
+        if: ${{ (success() || failure()) && !env.ACT }}
         uses: mikepenz/action-junit-report@v3
         with:
             report_paths: pytest.xml
