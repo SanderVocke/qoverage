@@ -25,7 +25,7 @@ jobs:
       - name: Update and install dependencies
         run: |
           pacman -Syu --noconfirm
-          pacman -Sy --noconfirm python python-pip python-pytest qt6-declarative coreutils nodejs npm python-build wget
+          pacman -Sy --noconfirm python python-pip python-pytest qt6-declarative coreutils nodejs npm python-build wget python-coverage
 
       - name: Checkout
         uses: actions/checkout@v3
@@ -50,16 +50,46 @@ jobs:
           name: ${{ env.wheel_filename }}
           path: ${{ env.wheel_path }}
       
-      - name: Install wheel
-        run: |
-          python -m pip install --break-system-packages dist/*.whl
+      - name: Prepare coverage settings
+        run: rm -f .coverage* && echo "${{ env.FILE_CONTENTS }}" > "${{ env.FILE_NAME }}"
+        env:
+          FILE_NAME: .coveragerc
+          FILE_CONTENTS: |
+            [run]
+            branch = True
+            parallel = True
+            source = .
     
-      - name: Run Tests
+      - name: Run Tests With Coverage
         shell: bash
-        run: |
-          mkdir -p /tmp/generated
-          QT_ASSUME_STDERR_HAS_CONSOLE=1 OUTPUT_DIR=/tmp/generated QOVERAGE_LOGLEVEL=debug QOVERAGE=qoverage DUMP_RUN_LOG=1 QT_QPA_PLATFORM=vnc QML=/usr/lib/qt6/bin/qml pytest test --junit-xml=pytest.xml
+        run: >
+          mkdir -p /tmp/generated &&
+          printf "import coverage\ncoverage.process_startup()\n" > sitecustomize.py &&
+          export PYTHONPATH=$PYTHONPATH:$(pwd) &&
+          QT_ASSUME_STDERR_HAS_CONSOLE=1
+          OUTPUT_DIR=/tmp/generated
+          QOVERAGE_LOGLEVEL=debug
+          QOVERAGE="python -m qoverage"
+          DUMP_RUN_LOG=1
+          QT_QPA_PLATFORM=vnc
+          QML=/usr/lib/qt6/bin/qml
+          COVERAGE_PROCESS_START=.coveragerc
+          python -m coverage run -m pytest . --junit-xml=pytest.xml --verbose
+          -k 'test_example[for]'
       
+      - name: Generate Pytest coverage report
+        run: |
+          rm -f coverage.xml
+          python -m coverage combine .coverage.*
+          python -m coverage xml -i -o coverage.xml
+      
+      # - name: Install wheel and run qoverage from command-line
+      #   run: |
+      #     python -m pip install --break-system-packages dist/*.whl
+      #     qoverage -h
+      #     cd /tmp && qoverage -h
+      #     cd /tmp && python -m qoverage -h
+
       - name: Upload generated code
         if: ${{ (success() || failure()) && !env.ACT }}
         uses: actions/upload-artifact@v3
@@ -75,3 +105,8 @@ jobs:
             detailed_summary: true
             include_passed: true
             check_name: 'pytest'
+
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v3
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
