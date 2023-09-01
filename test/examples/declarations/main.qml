@@ -31,7 +31,7 @@ ApplicationWindow {                        //COV:1
         id: quittimer                      //COV:null
         running: false                     //COV:1
         interval: 200                      //COV:1
-        onTriggered: Qt.callLater(Qt.quit) //COV:1
+        //onTriggered: Qt.callLater(Qt.quit) //COV:1
     }                                      //COV:null
 }                                          //COV:null
                                            //COV:null
