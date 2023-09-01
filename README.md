@@ -78,7 +78,3 @@ Implementing this custom collector means you have full control over its lifecycl
 `<QOVERAGE file=/path/to/my/file>[0, 0, 0, 1, null, null, 0, ...]</QOVERAGE>`
 
 For more information, see [file_tracker.template.js](qoverage/templates/file_tracker.template.js) (the implementation of the Javascript per-file tracking library). For a working example, see [run_qml_tests.py](https://github.com/SanderVocke/shoopdaloop/blob/master/src/shoopdaloop/run_qml_tests.py) in the [ShoopDaLoop](https://github.com/SanderVocke/shoopdaloop) project. There, a custom Qoverage plugin, made in Python, is used to get Qoverage reporting working with a custom QML testrunner.
-
-## Using qoverage from a container
-
-If your system has a pre-6.5 Qt6, you can just run Qoverage from a container which has the correct Qt6 version. The official image is [sandervocke/qoverage](https://hub.docker.com/r/sandervocke/qoverage). Alternatively, you can pass a containerized command as the QMLDOM env variable such that qoverage will run the `qmldom` tool in a container.
