@@ -58,14 +58,8 @@ jobs:
         shell: bash
         run: |
           mkdir -p /tmp/generated
-          OUTPUT_DIR=/tmp/generated QOVERAGE_LOGLEVEL=debug QOVERAGE=qoverage DUMP_RUN_LOG=1 QT_QPA_PLATFORM=vnc QML=/usr/lib/qt6/bin/qml pytest test --junit-xml=pytest.xml
+          QT_ASSUME_STDERR_HAS_CONSOLE=1 OUTPUT_DIR=/tmp/generated QOVERAGE_LOGLEVEL=debug QOVERAGE=qoverage DUMP_RUN_LOG=1 QT_QPA_PLATFORM=vnc QML=/usr/lib/qt6/bin/qml pytest test --junit-xml=pytest.xml
       
-      - name: tst
-        if: ${{ success() || failure() }}
-        shell: bash
-        run: |
-          QT_ASSUME_STDERR_HAS_CONSOLE=1 QT_LOGGING_RULES="*.debug=true; qt.*.debug=false" QT_QPA_PLATFORM=vnc /usr/lib/qt6/bin/qml --verbose /tmp/generated/declarations/main.qml
-
       - name: Upload generated code
         if: ${{ (success() || failure()) && !env.ACT }}
         uses: actions/upload-artifact@v3

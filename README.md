@@ -52,7 +52,12 @@ Depending on the situation, extra steps may be required in order to get the trac
 
 The default method for this is that the instrumented Javascript code listens for the Application.aboutToQuit signal, and when it comes, dumps its coverage data to the console by throwing a Javascript error (this seems more reliable than console.log). This method works e.g. when running the examples in this codebase using the `qml` executable.
 
-If for whatever reason this does not work, it is possible to provide a collection plug-in as follows:
+If for whatever reason this does not work:
+- Ensure no debug logging filters are blocking console messages/exceptions from appearing: `QT_LOGGING_RULES="*.debug=true; qt.*.debug=false"`
+- Ensure Qt knows that there is a stderr console available: `QT_ASSUME_STDERR_HAS_CONSOLE=1`
+- See if other console log messages from your QML code are appearing. If they do, but Qoverage reports don't get printed, this means that maybe the application quit signal did not trigger qoverage collection. See a possible solution below.
+
+If all else fails or a special solution is needed, it is possible to provide a collection plug-in as follows:
 
 - An object should be registered as a QML global context property before the application starts. The property key should be `qoverage_collector_factory`.
 - This object should have a Qt slot method named `create_file_collector(filename, initial_lines_data)`, which:
