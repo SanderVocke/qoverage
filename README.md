@@ -15,6 +15,10 @@ The coverage generation process is as follows:
 
 A Cobertura-style XML is generated.
 
+## Installation
+
+`pip install qoverage`
+
 ## Status
 
 The current state is pre-alpha. Some details:
