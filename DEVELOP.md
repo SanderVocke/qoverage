@@ -15,9 +15,4 @@ The ways to tell the above properties for each node are defined in the [dom.py](
 
 ## Adding/changing Javascript analysis and testing
 
-To add/change a behavior:
-
-* First, add a testcase inside `test/examples`. You can copy the `basic` example. Don't worry about the `//COV:xxx` comments for now.
-* In the new testcase (make sure it has a `main.qml`), write an example of the buggy/unsupported syntax. Leave the existing code intact as well (in particular the timer which ensure the example auto-closes in a fraction of a second).
-* Run the testcase: `OPEN_DIFF_TOOL=kdiff3 pytest test -k 'test_example[my_testcase]'`. This will run only your case. If it finishes, it will open `kdiff3` (or whatever tool you put there, should support directory diff) to show you the difference between the `//COV:xxx` annotation in the testcase and the actual coverage found. If the testcase didn't finish at all, have a look at the instrumented sources to see whether instrumentation made the file invalid.
-* Use the result to make any fixes necessary to `qoverage`, and when the outcome looks correct, copy the `//COV:xxx` annotations into the testcase. The test should now pass.
+With new/changed functionality, you should also add or change (a) testcase(s). See [test/README.md](test/README.md).

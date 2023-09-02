@@ -3,3 +3,4 @@ qoverage.egg-info
 build
 dist
 qoverage/bundled_qmldom
+coverage.xml

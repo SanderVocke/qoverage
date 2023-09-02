@@ -37,6 +37,10 @@ There is also an option to open a file diff tool right away on failure. You can 
 OPEN_DIFF_TOOL=kdiff3 pytest -k 'test_example[while]'
 ```
 
+## Adding a testcase
+
+The easiest way is to copy the `basic` example, add any new functionality into it without adding/changing the `//COV` markers, running the test and using the diff tool with `OPEN_DIFF_TOOL` to copy the markers back into the testcase.
+
 ## Troubleshooting
 
 * Sometimes the wrong `qml` executable is in the path (e.g. of an older Qt version). In that case you can override using the QML env variable.
