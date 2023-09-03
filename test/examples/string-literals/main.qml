@@ -6,9 +6,17 @@ ApplicationWindow {                        //COV:1
     visible: true                          //COV:1
     width: 200                             //COV:1
     height: 200                            //COV:1
-    title: "Test \""                       //COV:1
-    property string other: 'test " '       //COV:1
+    title: "Test"                          //COV:1
     id: root                               //COV:null
+                                           //COV:null
+    property string a : " \" "             //COV:1
+    property string b : " ' "              //COV:1
+    property string c : ' " '              //COV:1
+    property string d : ' \' '             //COV:1
+    property string e : " < > "            //COV:1
+    property string f : " & "              //COV:1
+    property string g : "  \n  "           //COV:1
+    property string h : "  < >  ' \" & "   //COV:1
                                            //COV:null
     Component.onCompleted: {               //COV:null
       console.log('Hello World')           //COV:1
