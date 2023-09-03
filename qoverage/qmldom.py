@@ -3,8 +3,32 @@ import logging
 import subprocess
 import xml.dom.minidom
 import tempfile
+import re
 
 logger = logging.getLogger('qmldom')
+
+def fix_string_literals(ast):
+    n_fixes = 0
+    def do_replace(find, replace):
+        nonlocal ast, n_fixes
+        match = re.search(find, ast)
+        new_ast, n = re.subn(find, replace, ast)
+        ast = new_ast
+        logger.debug(n)
+        n_fixes += n
+        if n > 0:
+            do_replace(find, replace)
+    
+    do_replace(r'(.*<StringLiteral.*value="[^"]*)\\"', r'\1&quot;')
+    do_replace(r'(.*<StringLiteral.*value="[^"]*)\'', r'\1&apos;')
+    do_replace(r'(.*<StringLiteral.*value="[^"]*)<', r'\1&lt;')
+    do_replace(r'(.*<StringLiteral.*value="[^"]*)>', r'\1&gt;')
+    do_replace(r'(.*<StringLiteral.*value="[^"]*)&(?!quot;|amp;|lt;|gt;|apos;)', r'\1&amp;')
+
+    logger.debug('Fixed {} occurrences of illegal escapes in string literals (QTBUG116618)'.format(n_fixes))
+
+    return ast
+    
 
 class QMLDom:
     def __init__(self, qmldom_path=None) -> None:
@@ -29,9 +53,7 @@ class QMLDom:
     def ast_dom(self, contents) -> xml.dom.minidom.Document:
         try:
             ast = self.ast(contents)
-
-            # Because of QTBUG-116618. This may be overkill, but haven't had failures with it so far.
-            ast = ast.replace(r'\"', '&quot;')
+            ast = fix_string_literals(ast)
 
             try:
                 return xml.dom.minidom.parseString(ast)
