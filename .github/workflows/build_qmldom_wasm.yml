@@ -43,8 +43,8 @@ jobs:
         run: |
           echo "QT_REV=$(git ls-remote --tags git://code.qt.io/qt/qt5.git ${{ inputs.qt_ref }} | sed -r 's/([^ \t]*).*/\1/')" | tee -a $GITHUB_ENV
 
-      - name: Cache Qt Sources
-        uses: actions/cache@v3
+      - name: Cache load Qt Sources
+        uses: actions/cache/restore@v3
         id: cache-qt-src
         with:
           path: qt6-src
@@ -56,9 +56,16 @@ jobs:
           cd qt6
           git fetch origin && git checkout ${{ env.QT_REV }}
           ./init-repository -f --module-subset=qtbase,qtdeclarative
+      
+      - name: Cache save Qt Sources
+        uses: actions/cache/save@v3
+        id: cache-save-qt-src
+        with:
+          path: qt6-src
+          key: qt6-src-${{ env.QT_REV }}
 
-      - name: Cache Qt host build
-        uses: actions/cache@v3
+      - name: Cache load Qt host build
+        uses: actions/cache/restore@v3
         id: cache-qt-build-host
         with:
           path: qt6-build-host
@@ -75,6 +82,13 @@ jobs:
         run: |
           cd qt6-build-host && cmake --build . --parallel 4
           cd qt6-build-host && cmake --install .
+      
+      - name: Cache save Qt host build
+        uses: actions/cache/save@v3
+        id: cache-save-qt-build-host
+        with:
+          path: qt6-build-host
+          key: qt6-build-host-${{ env.QT_REV }}-1
         
       - name: Patch Qt6 for Wasm
         run: |
