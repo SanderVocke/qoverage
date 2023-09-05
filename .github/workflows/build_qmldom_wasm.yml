@@ -29,7 +29,7 @@ jobs:
       
       - name: Short git sha and config
         run: |
-          echo "git_sha=$(git rev-parse --short $GITHUB_SHA)" | tee -a $GITHUB_ENV
+          echo "git_sha=$GITHUB_SHA" | tee -a $GITHUB_ENV
           git config --global user.email "builder@nothing.com"
           git config --global user.name "Builder"
       
@@ -39,9 +39,15 @@ jobs:
           rm -rf /opt/wasix-sysroot
           unzip wasix-sysroot.zip -d /opt/wasix-sysroot
 
+      - name: Install builtins
+        run: |
+          export CLANG_MAJOR=$(clang --version | grep "clang version" | sed -r 's/.*version[ ]*([0-9]+).*/\1/')
+          mkdir -p /usr/lib/clang/16/lib/wasi
+          cp /opt/wasix-sysroot/lib/wasm32-wasi/libclang_rt.builtins-wasm32.a /usr/lib/clang/16/lib/wasi/
+
       - name: Determine Qt revision
         run: |
-          echo "QT_REV=$(git ls-remote --tags git://code.qt.io/qt/qt5.git ${{ inputs.qt_ref }} | sed -r 's/([^ \t]*).*/\1/')" | tee -a $GITHUB_ENV
+          echo "QT_REV=$(git ls-remote git://code.qt.io/qt/qt5.git ${{ inputs.qt_ref }} | sed -r 's/([^ \t]*).*/\1/')" | tee -a $GITHUB_ENV
 
       - name: Cache load Qt Sources
         uses: actions/cache/restore@v3
@@ -75,13 +81,13 @@ jobs:
         if: steps.cache-qt-build-host.outputs.cache-hit != 'true'
         run: |
           mkdir -p qt6-build-host
-          cd qt6-build-host && ../qt6/configure -skip qtdeclarative -prefix /opt/qt6 -shared -no-opengl
+          cd qt6-build-host && ../qt6/configure -prefix /opt/qt6 -shared -no-opengl
       
       - name: Build and install Qt6 (host)
         if: steps.cache-qt-build-host.outputs.cache-hit != 'true'
         run: |
           cd qt6-build-host && cmake --build . --parallel 4
-          cd qt6-build-host && cmake --install .
+          cmake --install .
       
       - name: Cache save Qt host build
         uses: actions/cache/save@v3
@@ -95,10 +101,10 @@ jobs:
           cd qt6/qtbase && git am ../../.github/workflows/files/qt6.*.patch
 
       - name: Configure Qt6 (WASM)
-        run: |
-          mkdir -p qt6-build
-          cd qt6-build
-          ../qt6/configure -prefix /opt/qt6-wasm -static -no-opengl -platform wasm-emscripten -qt-host-path /opt/qt6 -make qmldom -- --fresh -DCMAKE_TOOLCHAIN_FILE=/opt/wasix-sysroot/clang-wasix.cmake_toolchain
+        run: >
+          mkdir -p qt6-build &&
+          cd qt6-build &&
+          ../qt6/configure -prefix /opt/qt6-wasm -static -no-opengl -platform unsupported -qt-host-path /opt/qt6  -- --fresh -DCMAKE_TOOLCHAIN_FILE=/opt/wasix-sysroot/clang-wasix.cmake_toolchain -DCMAKE_SYSROOT=/opt/wasix-sysroot -DFORCE_QT_BUILD_TOOLS=ON
       
       - name: Build qmldom
         run: |
@@ -108,7 +114,7 @@ jobs:
       - name: Upload qmldom
         uses: actions/upload-artifact@v2
         with:
-          name: qmldom-emscripten
+          name: qmldom-wasm
           path: qt6-build/qtbase/bin/qmldom*
 
             
