@@ -23,114 +23,33 @@ jobs:
       - name: Update and install dependencies
         run: |
           pacman -Syu --noconfirm
-          pacman -Sy --noconfirm coreutils nodejs npm wget git cmake mesa ninja llvm clang rsync
+          pacman -Sy --noconfirm coreutils nodejs npm wget git cmake mesa ninja llvm clang rsync cargo rust lld unzip
 
       - name: Checkout
         uses: actions/checkout@v3
       
-      - name: Checkout Wasix-libc
+      - name: Short git sha
         run: |
-          if [ ! -d "wasix-libc" ]; then git clone https://github.com/wasix-org/wasix-libc.git; fi
-          cd wasix-libc
-          git fetch && git checkout origin/main
-          echo "libc_rev=$(git rev-parse --short HEAD)" | tee $GITHUB_ENV
+          echo "git_sha=$(git rev-parse --short $GITHUB_SHA)" | tee -a $GITHUB_ENV
       
-      - name: Cache restore wasix-libc sysroot
-        id: cache-wasix-libc
-        uses: actions/cache/restore@v3
-        with:
-          path: /opt/wasm-sysroot
-          key: wasix-libc-sysroot-${{ env.libc_rev }}
-
-      - name: Patch wasix-libc
-        if: steps.cache-wasix-libc.outputs.cache-hit != 'true'
+      - name: Install WASIX sysroot
         run: |
-          cd wasix-libc
-          git am ../.github/workflows/files/wasix-libc.*.patch
-      
-      - name: Build wasix-libc
-        if: steps.cache-wasix-libc.outputs.cache-hit != 'true'
-        run: |
-          cd wasix-libc
-          TARGET_ARCH=wasm32 TARGET_OS=wasix make CC=clang AR=llvm-ar NM=llvm-nm || true
-          rm -rf /opt/wasm-sysroot
-          cp -r sysroot /opt/wasm-sysroot
-      
-      - name: Cache save wasix-libc
-        if: steps.cache-wasix-libc.outputs.cache-hit != 'true'
-        uses: actions/cache/save@v3
-        with:
-          path: /opt/wasm-sysroot
-          key: wasix-libc-sysroot-${{ env.libc_rev }}
-      
-      - name: Checkout LLVM
-        run: |
-          if [ ! -d "llvm-project" ]; then git clone https://github.com/llvm/llvm-project.git; fi
-          cd llvm-project
-          export LLVM_TAG=$(echo "llvmorg-$(llvm-ar --version | grep -i "LLVM version" | sed -r 's/.*version ([0-9\.]+).*/\1/')")
-          echo "LLVM tag: $LLVM_TAG"
-          git fetch origin refs/tags/$LLVM_TAG
-          if [ "$(git rev-parse $LLVM_TAG)" != "$(git rev-parse HEAD)" ]; then echo "Checkout ($(git rev-parse $LLVM_TAG) != $(git rev-parse HEAD))" && git reset --hard $LLVM_TAG && echo "checked out $(git rev-parse HEAD)"; fi
-
-      - name: Build and install wasm-ld
-        run: |
-          mkdir -p build-ld
-          cd build-ld
-          cmake --fresh -DCMAKE_INSTALL_PREFIX=/opt/wasm-tools ../llvm-project/lld
-          cmake --build . --target install --parallel 4
-      
-      - name: Build and install compiler_rt builtins
-        run: |
-          mkdir -p build-compiler-rt-builtins
-          cd build-compiler-rt-builtins
-          export PATH="$PATH:/opt/wasm-tools/bin"
-          cmake --fresh -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON -DCOMPILER_RT_OS_DIR=wasm32-wasi -DCOMPILER_RT_DEFAULT_TARGET_ONLY:BOOL=ON -DCMAKE_TOOLCHAIN_FILE=../.github/workflows/files/clang-wasm.cmake_toolchain -DCMAKE_SYSROOT=/opt/wasm-sysroot -DCMAKE_INSTALL_PREFIX=/opt/wasm-sysroot ../llvm-project/compiler-rt/lib/builtins
-          cmake --build . --target install --parallel 4
-          export CLANG_MAJOR_VERSION=$(clang --version | grep -i "clang version" | sed -r 's/.*version ([0-9]+).*/\1/')
-          mkdir -p /usr/lib/clang/$CLANG_MAJOR_VERSION/lib/wasi
-          cp /opt/wasm-sysroot/lib/wasm32-wasi/libclang_rt.builtins-wasm32.a /usr/lib/clang/$CLANG_MAJOR_VERSION/lib/wasi/libclang_rt.builtins-wasm32.a
-
-      - name: Build and install LLVM libc++
-        run: >
-          mkdir -p build-libcxx &&
-          cd build-libcxx &&
-          export PATH="$PATH:/opt/wasm-tools/bin" &&
-          cmake
-          --fresh
-          -DLIBCXX_INCLUDE_BENCHMARKS=OFF
-          -DCMAKE_C_COMPILER_WORKS=ON
-          -DCMAKE_CXX_COMPILER_WORKS=ON
-          -DLIBCXX_ENABLE_FILESYSTEM:BOOL=OFF
-          -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON
-          -DUNIX:BOOL=ON 
-          -DLIBCXX_HAS_MUSL_LIBC:BOOL=ON
-          -DCMAKE_TOOLCHAIN_FILE=../.github/workflows/files/clang-wasm.cmake_toolchain
-          -DCMAKE_SYSROOT=/opt/wasm-sysroot
-          -DCMAKE_INSTALL_PREFIX=/opt/wasm-sysroot
-          -DLIBCXX_ABI_ENABLE_EXCEPTIONS=OFF
-          -DLIBCXX_ENABLE_EXCEPTIONS=ON
-          -DLIBCXX_CXX_ABI=libcxxabi
-          -DLIBCXX_CXX_ABI_INCLUDE_PATHS=../llvm-project/libcxxabi/include
-          -DLIBCXX_LIBDIR_SUFFIX="/wasm32-wasi"
-          -DLIBCXXABI_LIBDIR_SUFFIX="/wasm32-wasi"
-          -DLLVM_ENABLE_RUNTIMES="libcxx;libcxxabi"
-          -DLIBCXXABI_ENABLE_SHARED:BOOL=OFF
-          -DLIBCXX_ENABLE_SHARED:BOOL=OFF
-          ../llvm-project/runtimes
-          && cmake --build . --target install --parallel 4
+          wget https://github.com/SanderVocke/wasix-sysroot/releases/download/v1.0.0/wasix-sysroot.zip
+          rm -rf /opt/wasix-sysroot
+          unzip wasix-sysroot.zip -d /opt/wasix-sysroot
 
       - name: Checkout Qt sources
         run: |
           if [ ! -d "qt6" ]; then git clone git://code.qt.io/qt/qt5.git qt6; fi
           cd qt6
-          git fetch && git checkout origin/dev
+          git fetch origin dev && git checkout origin/dev
           ./init-repository -f --module-subset=qtbase,qtdeclarative
 
       - name: Checkout Qt sources (host)
         run: |
           if [ ! -d "qt6-host" ]; then echo $(pwd) && git clone ./qt6 qt6-host; fi
           cd qt6-host
-          git fetch && git checkout origin/dev
+          git fetch origin dev && git checkout origin/dev
           git remote remove origin
           git remote add origin git://code.qt.io/qt/qt5.git
           ./init-repository -f --module-subset=qtbase
@@ -148,27 +67,25 @@ jobs:
         run: |
           cd qt6-build-host && cmake --install .
         
-      # - name: Patch Qt6
-      #   run: |
-      #     cd qt6/qtbase && git am ../../.github/workflows/files/qt6.*.patch
+      - name: Patch Qt6
+        run: |
+          cd qt6/qtbase && git am ../../.github/workflows/files/qt6.*.patch
 
-      # - name: Configure Qt6 (Emscripten)
-      #   run: |
-      #     mkdir -p qt6-build
-      #     cd qt6-build
-      #     export EMSDK=/usr/lib/emscripten
-      #     ../qt6/configure -prefix /opt/qt6-emscripten -static -no-opengl -platform wasm-emscripten -qt-host-path /opt/qt6
-      #     cmake -DQT_FORCE_BUILD_TOOLS=1 ../qt6
+      - name: Configure Qt6 (WASM)
+        run: |
+          mkdir -p qt6-build
+          cd qt6-build
+          ../qt6/configure -prefix /opt/qt6-wasm -static -no-opengl -platform wasm-emscripten -qt-host-path /opt/qt6 -make qmldom -- --fresh -DCMAKE_TOOLCHAIN_FILE=/opt/wasix-sysroot/clang-wasix.cmake_toolchain
       
-      # - name: Build qmldom
-      #   run: |
-      #     cd qt6-build
-      #     cmake --build . --parallel 4 --target qmldom.js
+      - name: Build qmldom
+        run: |
+          cd qt6-build
+          cmake --build . --parallel 4 --target qmldom.js
      
-      # - name: Upload qmldom
-      #   uses: actions/upload-artifact@v2
-      #   with:
-      #     name: qmldom-emscripten
-      #     path: qt6-build/qtbase/bin/qmldom*
+      - name: Upload qmldom
+        uses: actions/upload-artifact@v2
+        with:
+          name: qmldom-emscripten
+          path: qt6-build/qtbase/bin/qmldom*
 
             

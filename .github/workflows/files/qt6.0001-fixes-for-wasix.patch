@@ -1,0 +1,128 @@
+From 8a4f364ec0f25f0fdf315c3f111df1aeb738051f Mon Sep 17 00:00:00 2001
+From: Sander Vocke <sandervocke@gmail.com>
+Date: Tue, 5 Sep 2023 12:23:11 +0000
+Subject: [PATCH] Various tweaks for building against wasix-libc
+
+---
+ cmake/QtPublicWasmToolchainHelpers.cmake | 20 +++++++--------
+ cmake/QtToolHelpers.cmake                |  2 +-
+ cmake/QtWasmHelpers.cmake                | 32 ++++++++++++------------
+ 3 files changed, 27 insertions(+), 27 deletions(-)
+
+diff --git a/cmake/QtPublicWasmToolchainHelpers.cmake b/cmake/QtPublicWasmToolchainHelpers.cmake
+index 145cf70e33..04c2f29b05 100644
+--- a/cmake/QtPublicWasmToolchainHelpers.cmake
++++ b/cmake/QtPublicWasmToolchainHelpers.cmake
+@@ -89,15 +89,15 @@ function(__qt_internal_get_qt_build_emsdk_version out_var)
+ endfunction()
+ 
+ function(_qt_test_emscripten_version)
+-    __qt_internal_get_emcc_recommended_version(_recommended_emver)
+-    __qt_internal_get_emroot_path_suffix_from_emsdk_env(emroot_path)
+-    __qt_internal_query_emsdk_version("${emroot_path}" TRUE current_emsdk_ver)
+-    __qt_internal_get_qt_build_emsdk_version(qt_build_emcc_version)
++    #__qt_internal_get_emcc_recommended_version(_recommended_emver)
++    #__qt_internal_get_emroot_path_suffix_from_emsdk_env(emroot_path)
++    #__qt_internal_query_emsdk_version("${emroot_path}" TRUE current_emsdk_ver)
++    #__qt_internal_get_qt_build_emsdk_version(qt_build_emcc_version)
+ 
+-    if(NOT "${qt_build_emcc_version}" STREQUAL "${current_emsdk_ver}")
+-        message("Qt Wasm built with Emscripten version: ${qt_build_emcc_version}")
+-        message("You are using Emscripten version: ${current_emsdk_ver}")
+-        message("The recommended version of Emscripten for this Qt is: ${_recommended_emver}")
+-        message("This may not work correctly")
+-    endif()
++    #if(NOT "${qt_build_emcc_version}" STREQUAL "${current_emsdk_ver}")
++    #    message("Qt Wasm built with Emscripten version: ${qt_build_emcc_version}")
++    #    message("You are using Emscripten version: ${current_emsdk_ver}")
++    #    message("The recommended version of Emscripten for this Qt is: ${_recommended_emver}")
++    #    message("This may not work correctly")
++    #endif()
+ endfunction()
+diff --git a/cmake/QtToolHelpers.cmake b/cmake/QtToolHelpers.cmake
+index 9fa84146b8..2f39aaae9b 100644
+--- a/cmake/QtToolHelpers.cmake
++++ b/cmake/QtToolHelpers.cmake
+@@ -503,7 +503,7 @@ function(qt_check_if_tools_will_be_built)
+         set(will_build_tools FALSE)
+         if(QT_FORCE_BUILD_TOOLS)
+             set(will_build_tools TRUE)
+-            set(need_target_rename TRUE)
++            set(need_target_rename FALSE)
+         endif()
+     else()
+         set(will_build_tools TRUE)
+diff --git a/cmake/QtWasmHelpers.cmake b/cmake/QtWasmHelpers.cmake
+index 2b3a97987f..b0923d84f2 100644
+--- a/cmake/QtWasmHelpers.cmake
++++ b/cmake/QtWasmHelpers.cmake
+@@ -11,7 +11,7 @@ function (qt_internal_setup_wasm_target_properties wasmTarget)
+     "SHELL:-s WASM_BIGINT=1"
+     "SHELL:-s STACK_SIZE=5MB")
+ 
+-    target_link_libraries("${wasmTarget}" INTERFACE embind)
++    #target_link_libraries("${wasmTarget}" INTERFACE embind)
+ 
+     ## wasm64
+     if (WASM64)
+@@ -31,12 +31,12 @@ function (qt_internal_setup_wasm_target_properties wasmTarget)
+     endif()
+ 
+     # wasm exceptions
+-    if (QT_FEATURE_wasm_exceptions)
+-        target_compile_options("${wasmTarget}" INTERFACE -fwasm-exceptions)
+-        target_link_options("${wasmTarget}" INTERFACE -fwasm-exceptions)
+-    else()
++    #if (QT_FEATURE_wasm_exceptions)
++    #    target_compile_options("${wasmTarget}" INTERFACE -fwasm-exceptions)
++    #    target_link_options("${wasmTarget}" INTERFACE -fwasm-exceptions)
++    #else()
+         target_link_options("${wasmTarget}" INTERFACE "SHELL:-s DISABLE_EXCEPTION_CATCHING=1")
+-    endif()
++    #endif()
+ 
+     if (QT_FEATURE_thread)
+         target_compile_options("${wasmTarget}" INTERFACE "SHELL:-pthread")
+@@ -46,19 +46,19 @@ function (qt_internal_setup_wasm_target_properties wasmTarget)
+     target_link_options("${wasmTarget}" INTERFACE "SHELL:-s ALLOW_MEMORY_GROWTH")
+ 
+     # debug add_compile_options
+-    if ("QT_WASM_SOURCE_MAP=1" IN_LIST QT_QMAKE_DEVICE_OPTIONS)
+-        set(WASM_SOURCE_MAP_BASE "http://localhost:8000/")
++    #if ("QT_WASM_SOURCE_MAP=1" IN_LIST QT_QMAKE_DEVICE_OPTIONS)
++    #    set(WASM_SOURCE_MAP_BASE "http://localhost:8000/")
+ 
+-        if(DEFINED QT_WASM_SOURCE_MAP_BASE)
+-            set(WASM_SOURCE_MAP_BASE "${QT_WASM_SOURCE_MAP_BASE}")
+-        endif()
++    #    if(DEFINED QT_WASM_SOURCE_MAP_BASE)
++    #        set(WASM_SOURCE_MAP_BASE "${QT_WASM_SOURCE_MAP_BASE}")
++    #    endif()
+ 
+         # Pass --source-map-base on the linker line. This informs the
+         # browser where to find the source files when debugging.
+         # -g4 to make source maps for debugging
+-        target_link_options("${wasmTarget}" INTERFACE  "-gsource-map" "--source-map-base" "${WASM_SOURCE_MAP_BASE}")
++    #    target_link_options("${wasmTarget}" INTERFACE  "-gsource-map" "--source-map-base" "${WASM_SOURCE_MAP_BASE}")
+ 
+-    endif()
++    #endif()
+ 
+     # a few good defaults to make console more verbose while debugging
+     target_link_options("${wasmTarget}" INTERFACE $<$<CONFIG:Debug>:
+@@ -121,9 +121,9 @@ function (qt_internal_setup_wasm_target_properties wasmTarget)
+ endfunction()
+ 
+ function(qt_internal_wasm_add_finalizers target)
+-    qt_add_list_file_finalizer(_qt_internal_set_wasm_export_name ${target})
+-    qt_add_list_file_finalizer(_qt_internal_add_wasm_extra_exported_methods ${target})
+-    qt_add_list_file_finalizer(_qt_internal_wasm_add_target_helpers ${target})
++    #qt_add_list_file_finalizer(_qt_internal_set_wasm_export_name ${target})
++    #qt_add_list_file_finalizer(_qt_internal_add_wasm_extra_exported_methods ${target})
++    #qt_add_list_file_finalizer(_qt_internal_wasm_add_target_helpers ${target})
+ endfunction()
+ 
+ 
+-- 
+2.42.0
+
