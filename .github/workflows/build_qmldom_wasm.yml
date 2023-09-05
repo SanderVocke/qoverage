@@ -47,7 +47,7 @@ jobs:
         uses: actions/cache/restore@v3
         id: cache-qt-src
         with:
-          path: qt6-src
+          path: qt6
           key: qt6-src-${{ env.QT_REV }}
 
       - name: Checkout Qt sources
@@ -61,7 +61,7 @@ jobs:
         uses: actions/cache/save@v3
         id: cache-save-qt-src
         with:
-          path: qt6-src
+          path: qt6
           key: qt6-src-${{ env.QT_REV }}
 
       - name: Cache load Qt host build
