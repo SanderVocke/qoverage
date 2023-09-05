@@ -1,0 +1,30 @@
+From 51dd715a085c3a1381f50caca6b8923ee09ea914 Mon Sep 17 00:00:00 2001
+From: Sander Vocke <sandervocke@gmail.com>
+Date: Mon, 4 Sep 2023 08:00:13 +0000
+Subject: [PATCH] Fix Emscripten detection on Arch Linux
+
+---
+ cmake/QtPublicWasmToolchainHelpers.cmake | 7 +------
+ 1 file changed, 1 insertion(+), 6 deletions(-)
+
+diff --git a/cmake/QtPublicWasmToolchainHelpers.cmake b/cmake/QtPublicWasmToolchainHelpers.cmake
+index 4ed223ed8a..145cf70e33 100644
+--- a/cmake/QtPublicWasmToolchainHelpers.cmake
++++ b/cmake/QtPublicWasmToolchainHelpers.cmake
+@@ -8,12 +8,7 @@
+ #
+ # then we set out_var to '/upstream/emscripten', so it's not a full path
+ function(__qt_internal_get_emroot_path_suffix_from_emsdk_env out_var)
+-    # Query EMSCRIPTEN_ROOT path.
+-    file(READ "$ENV{EMSDK}/.emscripten" ver)
+-    string(REGEX MATCH "EMSCRIPTEN_ROOT.*$" EMROOT "${ver}")
+-    string(REGEX MATCH "'([^' ]*)'" EMROOT2 "${EMROOT}")
+-    string(REPLACE "'" "" EMROOT_PATH "${EMROOT2}")
+-
++    set(EMROOT_PATH "")
+     set(${out_var} "${EMROOT_PATH}" PARENT_SCOPE)
+ endfunction()
+ 
+-- 
+2.42.0
+
