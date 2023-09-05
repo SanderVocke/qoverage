@@ -1,4 +1,4 @@
-name: Build qmldom emscripten
+name: Build qmldom (WASM)
 
 on:
   workflow_dispatch:
