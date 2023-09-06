@@ -22,7 +22,7 @@ jobs:
       - name: Update and install dependencies
         run: |
           pacman -Syu --noconfirm
-          pacman -Sy --noconfirm coreutils nodejs npm wget git cmake mesa ninja llvm clang rsync cargo rust lld unzip
+          pacman -Sy --noconfirm coreutils nodejs npm wget git cmake mesa ninja llvm clang rsync cargo rust lld unzip make wasmer
 
       - name: Checkout
         uses: actions/checkout@v3
@@ -47,11 +47,12 @@ jobs:
 
       - name: Determine Qt revision
         run: |
-          echo "QT_REV=$(git ls-remote git://code.qt.io/qt/qt5.git ${{ inputs.qt_ref }} | sed -r 's/([^ \t]*).*/\1/')" | tee -a $GITHUB_ENV
+          echo "QT_REV=$(git ls-remote git://code.qt.io/qt/qt5.git ${{ github.event.inputs.qt_ref }} | sed -r 's/([^ \t]*).*/\1/')" | tee -a $GITHUB_ENV
 
       - name: Cache load Qt Sources
         uses: actions/cache/restore@v3
         id: cache-qt-src
+        if: ${{ !env.ACT }}
         with:
           path: qt6
           key: qt6-src-${{ env.QT_REV }}
@@ -60,12 +61,14 @@ jobs:
         run: |
           if [ ! -d "qt6" ]; then git clone git://code.qt.io/qt/qt5.git qt6; fi
           cd qt6
+          git submodule update --checkout --force --recursive
           git fetch origin && git checkout ${{ env.QT_REV }}
           ./init-repository -f --module-subset=qtbase,qtdeclarative
       
       - name: Cache save Qt Sources
         uses: actions/cache/save@v3
         id: cache-save-qt-src
+        if: ${{ !env.ACT }}
         with:
           path: qt6
           key: qt6-src-${{ env.QT_REV }}
@@ -73,6 +76,7 @@ jobs:
       - name: Cache load Qt host build
         uses: actions/cache/restore@v3
         id: cache-qt-build-host
+        if: ${{ !env.ACT }}
         with:
           path: qt6-build-host
           key: qt6-build-host-${{ env.QT_REV }}-1
@@ -92,26 +96,33 @@ jobs:
       - name: Cache save Qt host build
         uses: actions/cache/save@v3
         id: cache-save-qt-build-host
+        if: ${{ !env.ACT }}
         with:
           path: qt6-build-host
           key: qt6-build-host-${{ env.QT_REV }}-1
         
       - name: Patch Qt6 for Wasm
         run: |
-          cd qt6/qtbase && git am ../../.github/workflows/files/qt6.*.patch
+          rm -rf qt6-wasm && cp -r qt6 qt6-wasm
+          cd qt6-wasm
+          git submodule update --checkout --force --recursive
+          cd qtbase && git apply ../../.github/workflows/files/qt6base.*.patch
+          cd ../qtdeclarative && git apply ../../.github/workflows/files/qt6declarative.*.patch
 
       - name: Configure Qt6 (WASM)
         run: >
           mkdir -p qt6-build &&
           cd qt6-build &&
-          ../qt6/configure -prefix /opt/qt6-wasm -static -no-opengl -platform unsupported -qt-host-path /opt/qt6  -- --fresh -DCMAKE_TOOLCHAIN_FILE=/opt/wasix-sysroot/clang-wasix.cmake_toolchain -DCMAKE_SYSROOT=/opt/wasix-sysroot -DFORCE_QT_BUILD_TOOLS=ON
+          export COMPILEFLAGS="-D__linux__ -DQT_NO_VERSION_TAGGING -I$(pwd)/../qt6-wasm/qtbase/mkspecs/common/posix -D_WASI_EMULATED_PROCESS_CLOCKS -DQT_LINUXBASE -DWASIX" &&
+          ../qt6-wasm/configure -prefix /opt/qt6-wasm -static -no-opengl -platform unsupported -qt-host-path /opt/qt6 -no-feature-brotli -no-feature-qml-network -no-feature-networkproxy -no-feature-networkinterface -no-feature-networklistmanager -no-feature-networkdiskcache -no-feature-library  -- --fresh -DCMAKE_TOOLCHAIN_FILE=$(pwd)/../.github/workflows/files/clang-wasix.cmake_toolchain -DCMAKE_SYSROOT=/opt/wasix-sysroot -DCMAKE_CXX_FLAGS="$COMPILEFLAGS" -DCMAKE_C_FLAGS="$COMPILEFLAGS" -DUNIX=1 -DQT_FORCE_BUILD_TOOLS=OFF
       
       - name: Build qmldom
         run: |
           cd qt6-build
-          cmake --build . --parallel 4 --target qmldom.js
+          cmake --build . --parallel 4 --target qmldom
      
       - name: Upload qmldom
+        if: ${{ !env.ACT }}
         uses: actions/upload-artifact@v2
         with:
           name: qmldom-wasm
