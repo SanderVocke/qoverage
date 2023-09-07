@@ -6,7 +6,7 @@ on:
       qt_ref:
         description: 'Qt branch or tag'
         required: true
-        default: 'b1ce3549a0f7378465a57173301281a1c9dbe0ba'
+        default: 'v6.6.0-beta3'
 
 permissions:
   contents: read
