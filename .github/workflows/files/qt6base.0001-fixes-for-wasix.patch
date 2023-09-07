@@ -1,24 +1,27 @@
-From 096ff0258e0aea24c77684051e3e85741a12efb7 Mon Sep 17 00:00:00 2001
+From 1820f0502b35f958e20e32b3f39ef7bef5ded8a3 Mon Sep 17 00:00:00 2001
 From: Builder <builder@nothing.com>
-Date: Wed, 6 Sep 2023 10:29:15 +0000
-Subject: [PATCH] Fixes for WASM
+Date: Thu, 7 Sep 2023 14:20:39 +0000
+Subject: [PATCH] fixes
 
 ---
- cmake/QtPublicWasmToolchainHelpers.cmake      | 20 ++++++------
- cmake/QtToolHelpers.cmake                     |  7 ++--
- cmake/QtWasmHelpers.cmake                     | 32 +++++++++----------
- mkspecs/common/posix/qplatformdefs.h          | 14 ++++++++
- src/3rdparty/forkfd/forkfd.c                  |  3 ++
- src/3rdparty/forkfd/forkfd_linux.c            |  5 +++
- src/corelib/global/qlogging.cpp               |  9 +++++-
- src/corelib/global/qtenvironmentvariables.cpp |  8 +++++
- src/corelib/io/qfilesystemengine_unix.cpp     |  9 +++++-
- src/corelib/io/qprocess_unix.cpp              |  6 ++++
- src/corelib/io/qstorageinfo_unix.cpp          |  5 +++
+ cmake/QtPublicWasmToolchainHelpers.cmake      | 20 +++---
+ cmake/QtToolHelpers.cmake                     |  7 +-
+ cmake/QtWasmHelpers.cmake                     | 32 ++++-----
+ mkspecs/common/posix/qplatformdefs.h          | 14 ++++
+ src/3rdparty/forkfd/forkfd.c                  |  3 +
+ src/3rdparty/forkfd/forkfd_linux.c            |  5 ++
+ src/corelib/CMakeLists.txt                    |  1 -
+ src/corelib/global/qlogging.cpp               |  9 ++-
+ src/corelib/global/qtenvironmentvariables.cpp |  8 +++
+ src/corelib/io/qfilesystemengine_unix.cpp     |  9 ++-
+ src/corelib/io/qlockfile_unix.cpp             |  5 ++
+ src/corelib/io/qprocess_unix.cpp              | 18 +++--
+ src/corelib/io/qstorageinfo_unix.cpp          |  5 ++
  src/corelib/plugin/qlibrary_unix.cpp          |  1 +
- src/corelib/thread/qthread_unix.cpp           |  2 +-
- src/corelib/time/qdatetime.cpp                |  4 +++
- 14 files changed, 93 insertions(+), 32 deletions(-)
+ src/corelib/thread/qthread_unix.cpp           |  8 ++-
+ src/corelib/time/qdatetime.cpp                |  4 ++
+ src/network/CMakeLists.txt                    | 70 +++++++++----------
+ 17 files changed, 145 insertions(+), 74 deletions(-)
 
 diff --git a/cmake/QtPublicWasmToolchainHelpers.cmake b/cmake/QtPublicWasmToolchainHelpers.cmake
 index 4ed223ed8a..b43eb98f27 100644
@@ -219,6 +222,18 @@ index cc7af6cb53..2e01027b78 100644
  }
  
  static int sys_clone(unsigned long cloneflags, int *ptid)
+diff --git a/src/corelib/CMakeLists.txt b/src/corelib/CMakeLists.txt
+index f5c4ef6e7d..efd8a91098 100644
+--- a/src/corelib/CMakeLists.txt
++++ b/src/corelib/CMakeLists.txt
+@@ -458,7 +458,6 @@ set(core_version_tagging_files
+     global/qversiontagging.cpp
+     global/qversiontagging.h)
+ qt_internal_extend_target(Core
+-    CONDITION TEST_ld_version_script OR APPLE OR WIN32
+     SOURCES ${core_version_tagging_files}
+ )
+ 
 diff --git a/src/corelib/global/qlogging.cpp b/src/corelib/global/qlogging.cpp
 index a7a057fcd6..2325ea13c5 100644
 --- a/src/corelib/global/qlogging.cpp
@@ -309,8 +324,24 @@ index a3d71aeeab..965073b608 100644
  
      // Second, try sendfile (it can send to some special types too).
      // sendfile(2) is limited in the kernel to 2G - 4k
+diff --git a/src/corelib/io/qlockfile_unix.cpp b/src/corelib/io/qlockfile_unix.cpp
+index 47aff8b973..0b910bc5d9 100644
+--- a/src/corelib/io/qlockfile_unix.cpp
++++ b/src/corelib/io/qlockfile_unix.cpp
+@@ -29,6 +29,11 @@
+ #  undef LOCK_NB
+ #endif
+ 
++#ifdef WASIX
++#undef LOCK_EX
++#undef LOCK_NB
++#endif
++
+ #include <sys/types.h> // kill
+ #include <signal.h>    // kill
+ #include <unistd.h>    // gethostname
 diff --git a/src/corelib/io/qprocess_unix.cpp b/src/corelib/io/qprocess_unix.cpp
-index 91a745d522..ce1ddeec99 100644
+index 91a745d522..389c5ec1df 100644
 --- a/src/corelib/io/qprocess_unix.cpp
 +++ b/src/corelib/io/qprocess_unix.cpp
 @@ -820,8 +820,10 @@ static const char *applyProcessParameters(const QProcess::UnixProcessParameters
@@ -340,6 +371,27 @@ index 91a745d522..ce1ddeec99 100644
  
      // Apply UID and GID parameters last. This isn't expected to fail either:
      // either we're trying to impersonate what we already are, or we're EUID or
+@@ -863,14 +867,14 @@ static const char *applyProcessParameters(const QProcess::UnixProcessParameters
+ // the noexcept here adds an extra layer of protection
+ static void callChildProcessModifier(const QProcessPrivate *d) noexcept
+ {
+-    QT_TRY {
++    //QT_TRY {
+         if (d->unixExtras->childProcessModifier)
+             d->unixExtras->childProcessModifier();
+-    } QT_CATCH (std::exception &e) {
+-        failChildProcess(d, e.what(), FakeErrnoForThrow);
+-    } QT_CATCH (...) {
+-        failChildProcess(d, "throw", FakeErrnoForThrow);
+-    }
++    //} QT_CATCH (std::exception &e) {
++    //    failChildProcess(d, e.what(), FakeErrnoForThrow);
++    //} QT_CATCH (...) {
++    //    failChildProcess(d, "throw", FakeErrnoForThrow);
++    //}
+ }
+ 
+ // IMPORTANT:
 @@ -886,9 +890,11 @@ void QChildProcess::startProcess() const noexcept
      // make sure this fd is closed if execv() succeeds
      qt_safe_close(d->childStartedPipe[0]);
@@ -382,7 +434,7 @@ index 84f572a003..eaf5c737ce 100644
  QT_END_NAMESPACE
 +
 diff --git a/src/corelib/thread/qthread_unix.cpp b/src/corelib/thread/qthread_unix.cpp
-index b0088d4ce0..210dce7a75 100644
+index b0088d4ce0..060130b9d1 100644
 --- a/src/corelib/thread/qthread_unix.cpp
 +++ b/src/corelib/thread/qthread_unix.cpp
 @@ -63,7 +63,7 @@
@@ -394,6 +446,33 @@ index b0088d4ce0..210dce7a75 100644
  #define QT_HAS_THREAD_PRIORITY_SCHEDULING
  #endif
  
+@@ -406,6 +406,10 @@ int QThreadPrivate::idealThreadCount = 1;
+ 
+ int QThread::idealThreadCount() noexcept
+ {
++#ifdef WASIX
++    return 10;
++#else
++
+     int cores = 1;
+ 
+ #if defined(Q_OS_HPUX)
+@@ -426,6 +430,7 @@ int QThread::idealThreadCount() noexcept
+     };
+ #  endif
+ 
++
+     // get the number of threads we're assigned, not the total in the system
+     QVarLengthArray<cpu_set_t, 1> cpuset(1);
+     int size = 1;
+@@ -484,6 +489,7 @@ int QThread::idealThreadCount() noexcept
+         return 1;
+ #endif
+     return cores;
++#endif
+ }
+ 
+ void QThread::yieldCurrentThread()
 diff --git a/src/corelib/time/qdatetime.cpp b/src/corelib/time/qdatetime.cpp
 index 4afd08b65b..f1fc0b8dc2 100644
 --- a/src/corelib/time/qdatetime.cpp
@@ -409,6 +488,94 @@ index 4afd08b65b..f1fc0b8dc2 100644
  QT_BEGIN_NAMESPACE
  
  using namespace Qt::StringLiterals;
+diff --git a/src/network/CMakeLists.txt b/src/network/CMakeLists.txt
+index c2a34c5319..2bc72409cc 100644
+--- a/src/network/CMakeLists.txt
++++ b/src/network/CMakeLists.txt
+@@ -170,22 +170,22 @@ qt_internal_extend_target(Network CONDITION QT_FEATURE_dnslookup
+         kernel/qdnslookup.cpp kernel/qdnslookup.h kernel/qdnslookup_p.h
+ )
+ 
+-qt_internal_extend_target(Network CONDITION UNIX
+-    SOURCES
+-        kernel/qhostinfo_unix.cpp
+-        socket/qnativesocketengine_unix.cpp
+-        socket/qnet_unix_p.h
+-)
+-
+-qt_internal_extend_target(Network CONDITION QT_FEATURE_linux_netlink AND UNIX
+-    SOURCES
+-        kernel/qnetworkinterface_linux.cpp
+-)
+-
+-qt_internal_extend_target(Network CONDITION UNIX AND NOT QT_FEATURE_linux_netlink
+-    SOURCES
+-        kernel/qnetworkinterface_unix.cpp
+-)
++#qt_internal_extend_target(Network CONDITION 0
++#    SOURCES
++#        kernel/qhostinfo_unix.cpp
++#        socket/qnativesocketengine_unix.cpp
++#        socket/qnet_unix_p.h
++#)
++
++#qt_internal_extend_target(Network CONDITION QT_FEATURE_linux_netlink AND UNIX
++#    SOURCES
++#        kernel/qnetworkinterface_linux.cpp
++#)
++
++#qt_internal_extend_target(Network CONDITION UNIX AND NOT QT_FEATURE_linux_netlink
++#    SOURCES
++#        kernel/qnetworkinterface_unix.cpp
++#)
+ 
+ qt_internal_extend_target(Network CONDITION WIN32
+     SOURCES
+@@ -303,25 +303,25 @@ qt_internal_extend_target(Network CONDITION MSVC
+         "-D_WINSOCK_DEPRECATED_NO_WARNINGS"
+ )
+ 
+-qt_internal_extend_target(Network CONDITION QT_FEATURE_localserver
+-    SOURCES
+-        socket/qlocalserver.cpp socket/qlocalserver.h socket/qlocalserver_p.h
+-        socket/qlocalsocket.cpp socket/qlocalsocket.h socket/qlocalsocket_p.h
+-)
+-
+-qt_internal_extend_target(Network CONDITION INTEGRITY AND QT_FEATURE_localserver
+-    SOURCES
+-        socket/qlocalserver_tcp.cpp
+-        socket/qlocalsocket_tcp.cpp
+-    DEFINES
+-        QT_LOCALSOCKET_TCP
+-)
+-
+-qt_internal_extend_target(Network CONDITION QT_FEATURE_localserver AND UNIX AND NOT INTEGRITY
+-    SOURCES
+-        socket/qlocalserver_unix.cpp
+-        socket/qlocalsocket_unix.cpp
+-)
++#qt_internal_extend_target(Network CONDITION QT_FEATURE_localserver
++#    SOURCES
++#        socket/qlocalserver.cpp socket/qlocalserver.h socket/qlocalserver_p.h
++#        socket/qlocalsocket.cpp socket/qlocalsocket.h socket/qlocalsocket_p.h
++#)
++
++#qt_internal_extend_target(Network CONDITION INTEGRITY AND QT_FEATURE_localserver
++#    SOURCES
++#        socket/qlocalserver_tcp.cpp
++#        socket/qlocalsocket_tcp.cpp
++#    DEFINES
++#        QT_LOCALSOCKET_TCP
++#)
++
++#qt_internal_extend_target(Network CONDITION QT_FEATURE_localserver AND UNIX AND NOT INTEGRITY
++#    SOURCES
++#        socket/qlocalserver_unix.cpp
++#        socket/qlocalsocket_unix.cpp
++#)
+ 
+ qt_internal_extend_target(Network CONDITION QT_FEATURE_localserver AND WIN32
+     SOURCES
 -- 
 2.42.0
 
