@@ -8,7 +8,7 @@ on:
         required: true
         default: 'v6.6.0-beta3'
       qt_rev:
-        description: 'Qt revision'
+        description: 'Override Qt revision SHA'
         required: false
 
 permissions:
