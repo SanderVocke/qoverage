@@ -80,6 +80,14 @@ jobs:
           path: qt6
           key: qt6-src-${{ env.QT_REV }}
 
+      - name: Patch Qt6 for Wasm
+        run: |
+          rm -rf qt6-wasm && cp -r qt6 qt6-wasm
+          cd qt6-wasm
+          git submodule update --checkout --force --recursive
+          cd qtbase && git apply ../../.github/workflows/files/qt6base.*.patch
+          cd ../qtdeclarative && git apply ../../.github/workflows/files/qt6declarative.*.patch
+
       - name: Cache load Qt host build
         uses: actions/cache/restore@v3
         id: cache-qt-build-host
@@ -107,14 +115,6 @@ jobs:
         with:
           path: qt6-build-host
           key: qt6-build-host-${{ env.QT_REV }}-1
-        
-      - name: Patch Qt6 for Wasm
-        run: |
-          rm -rf qt6-wasm && cp -r qt6 qt6-wasm
-          cd qt6-wasm
-          git submodule update --checkout --force --recursive
-          cd qtbase && git apply ../../.github/workflows/files/qt6base.*.patch
-          cd ../qtdeclarative && git apply ../../.github/workflows/files/qt6declarative.*.patch
 
       - name: Configure Qt6 (WASM)
         run: >
