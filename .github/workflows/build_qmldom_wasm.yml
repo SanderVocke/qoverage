@@ -7,6 +7,9 @@ on:
         description: 'Qt branch or tag'
         required: true
         default: 'v6.6.0-beta3'
+      qt_rev:
+        description: 'Qt revision'
+        required: false
 
 permissions:
   contents: read
@@ -47,7 +50,11 @@ jobs:
 
       - name: Determine Qt revision
         run: |
-          echo "QT_REV=$(git ls-remote git://code.qt.io/qt/qt5.git ${{ github.event.inputs.qt_ref }} | sed -r 's/([^ \t]*).*/\1/')" | tee -a $GITHUB_ENV
+          if [ -z "${{ github.event.inputs.qt_rev }}" ]; then
+            echo "QT_REV=${{ github.event.inputs.qt_rev }}" | tee -a $GITHUB_ENV
+          else
+            echo "QT_REV=$(git ls-remote https://github.com/qt/qt5.git ${{ github.event.inputs.qt_ref }} | sed -r 's/([^ \t]*).*/\1/')" | tee -a $GITHUB_ENV
+          fi
 
       - name: Cache load Qt Sources
         uses: actions/cache/restore@v3
@@ -59,7 +66,7 @@ jobs:
 
       - name: Checkout Qt sources
         run: |
-          if [ ! -d "qt6" ]; then git clone git://code.qt.io/qt/qt5.git qt6; fi
+          if [ ! -d "qt6" ]; then git clone https://github.com/qt/qt5.git qt6; fi
           cd qt6
           git submodule update --checkout --force --recursive
           git fetch origin && git checkout ${{ env.QT_REV }}
