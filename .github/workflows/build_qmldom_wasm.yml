@@ -50,7 +50,7 @@ jobs:
 
       - name: Determine Qt revision
         run: |
-          if [ -z "${{ github.event.inputs.qt_rev }}" ]; then
+          if [ ! -z "${{ github.event.inputs.qt_rev }}" ]; then
             echo "QT_REV=${{ github.event.inputs.qt_rev }}" | tee -a $GITHUB_ENV
           else
             echo "QT_REV=$(git ls-remote https://github.com/qt/qt5.git ${{ github.event.inputs.qt_ref }} | sed -r 's/([^ \t]*).*/\1/')" | tee -a $GITHUB_ENV
