@@ -32,9 +32,9 @@ jobs:
 
       - name: Get bundled qmldom
         run: |
-          wget https://github.com/SanderVocke/qoverage/releases/download/qmldom-6.5.2-v1.0.0/qmldom-3.6.2-linux-x64
+          wget https://github.com/SanderVocke/qoverage/releases/download/qmldom-6.5.3-v1.0.0/qmldom-6.5.3-linux-x64
           mkdir -p qoverage/bundled_qmldom
-          mv qmldom-3.6.2-linux-x64 qoverage/bundled_qmldom/qmldom
+          mv qmldom-3.6.3-linux-x64 qoverage/bundled_qmldom/qmldom
           chmod a+x qoverage/bundled_qmldom/qmldom
 
       - name: Build
