@@ -41,7 +41,7 @@ jobs:
       - if: ${{ github.event.inputs.force-rebuild == 'true' || steps.cache-qmldom.outputs.cache-hit != 'true' }}
         name: Download Qt sources
         run: |
-            wget https://download.qt.io/official_releases/qt/6.5/6.5.3/single/qt-everywhere-src-6.5.3.tar.xz
+            curl -L https://download.qt.io/official_releases/qt/6.5/6.5.3/single/qt-everywhere-src-6.5.3.tar.xz --output qt-everywhere-src-6.5.3.tar.xz
             tar -xf qt-everywhere-src-6.5.3.tar.xz
             mv qt-everywhere-src-6.5.3 qt
     
