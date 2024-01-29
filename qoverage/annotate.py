@@ -166,7 +166,7 @@ def pre_annotate(contents, qmldom : QMLDom = None, debug=False) -> str:
                 id = node_as(children_filter_nodes(parent_definition)[0], 'UiQualifiedId')
                 if id:
                     name = id.getAttribute('name')
-                    if name not in [ 'anchors', 'Timer', 'Repeater', 'Connections', 'Component' ]:
+                    if name not in [ 'anchors', 'drag', 'Timer', 'Repeater', 'Connections', 'Component' ]:
                         add_annotation(token_offset(node, 'lbraceToken') + 1, start_obj_annotation(annotation_id))
                         add_annotation(token_offset(node, 'rbraceToken'), end_obj_annotation(annotation_id))
                         next_annotation()
