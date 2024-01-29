@@ -93,7 +93,7 @@ def instrument(args, logger, debug):
                     f.write(pre_annotated)
                 logger.debug('Writing AST output from qmldom to: {}'.format(ast_str_filename))
                 with open(ast_str_filename, 'w') as f:
-                    f.write(ast_str_filename)
+                    f.write(ast_str)
         except Exception as e:
             logger.error('Failed to instrument {}: {}. Skipping.'.format(qml_file, e))
             logger.debug(traceback.format_exc())
