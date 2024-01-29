@@ -50,18 +50,18 @@ class QMLDom:
                 logger.error('Failed to parse QML file: {}'.format(e))
                 return ''
     
-    def ast_dom(self, contents) -> xml.dom.minidom.Document:
+    def ast_dom(self, contents) -> (xml.dom.minidom.Document, ast):
         try:
             ast = self.ast(contents)
             ast = fix_string_literals(ast)
 
             try:
-                return xml.dom.minidom.parseString(ast)
+                return (xml.dom.minidom.parseString(ast), ast)
             except Exception as e:
                 logger.error('Failed to parse QMLDom XML: {}'.format(e))
                 with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.xml') as f:
                     f.write(ast)
                 logger.error('XML file saved to: {} for inspection'.format(f.name))
-                return None
+                return (None, ast)
         except Exception as e:
             logger.error('Failed generate QMLDom XML: {}'.format(e))

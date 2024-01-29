@@ -61,10 +61,12 @@ def is_block_open(annotation_text):
 def is_block_close(annotation_text):
     return annotation_text.find(block_end_tag) != -1
 
+# Add marker tags in QML files which can later be used to inject code.
+# returns a tuple of (annotated code, QMLDom output)
 def pre_annotate(contents, qmldom : QMLDom = None, debug=False) -> str:
     if not qmldom:
         qmldom = QMLDom()
-    dom = qmldom.ast_dom(contents)
+    dom, ast_str = qmldom.ast_dom(contents)
     if not dom:
         raise Exception('Failed to parse QML file')
     
@@ -215,7 +217,7 @@ def pre_annotate(contents, qmldom : QMLDom = None, debug=False) -> str:
     visit_node(dom)
     
     result = apply_annotations()
-    return result
+    return (result, ast_str)
 
 def generate_db_js(db, n_lines, debug=False):
     n_annotations = max(db.keys()) + 1

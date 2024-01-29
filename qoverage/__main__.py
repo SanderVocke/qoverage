@@ -74,11 +74,12 @@ def instrument(args, logger, debug):
             os.makedirs(os.path.dirname(out_file), exist_ok=True)
         try:
             db_js_filename = out_file + '.qoverage.js'
+            ast_str_filename = out_file + '.qoverage.ast.qml'
             # Touch the file so that it will be detected during collection, even if annotation
             # fails
             with open(db_js_filename, 'w') as f:
                 pass
-            pre_annotated = pre_annotate(contents, qmldom, debug=debug)
+            pre_annotated, ast_str = pre_annotate(contents, qmldom, debug=debug)
             annotated,runtime_db_js = final_annotate(pre_annotated, os.path.basename(db_js_filename), debug=debug)
             logger.debug('Writing instrumented file to: {}'.format(out_file))
             with open(out_file, 'w') as f:
@@ -90,6 +91,9 @@ def instrument(args, logger, debug):
                 logger.debug('Writing intermediate (pre-annotated) file to: {}'.format(out_file + '.qoverage.pre'))
                 with open(out_file + '.qoverage.pre', 'w') as f:
                     f.write(pre_annotated)
+                logger.debug('Writing AST output from qmldom to: {}'.format(ast_str_filename))
+                with open(ast_str_filename, 'w') as f:
+                    f.write(ast_str_filename)
         except Exception as e:
             logger.error('Failed to instrument {}: {}. Skipping.'.format(qml_file, e))
             logger.debug(traceback.format_exc())
