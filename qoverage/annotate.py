@@ -63,7 +63,7 @@ def is_block_close(annotation_text):
 
 # Add marker tags in QML files which can later be used to inject code.
 # returns a tuple of (annotated code, QMLDom output)
-def pre_annotate(contents, qmldom : QMLDom = None, debug=False) -> str:
+def pre_annotate(contents, qmldom : QMLDom = None, filename='(unknown file)', debug=False) -> str:
     if not qmldom:
         qmldom = QMLDom()
     dom, ast_str = qmldom.ast_dom(contents)
@@ -130,11 +130,13 @@ def pre_annotate(contents, qmldom : QMLDom = None, debug=False) -> str:
                 end_offset = node_eval_end_offset(stmts[-1])
             
             if end_offset == None:
-                logger.warning("No execution analysis for statement list because no execution endpoint found:\n{}".format(
+                logger.warning(f"{filename}: No execution analysis for statement list because no execution endpoint found")
+                logger.debug("Node XML:\n{}".format(
                     node.toxml()
                 ))
             if start_offset == None:
-                logger.warning("No execution analysis for statement list because no execution start point found:\n{}".format(
+                logger.warning(f"{filename}: No execution analysis for statement list because no execution start point found")
+                logger.debug("Node XML:\n{}".format(
                     node.toxml()
                 ))
             
@@ -178,13 +180,13 @@ def pre_annotate(contents, qmldom : QMLDom = None, debug=False) -> str:
             start_offset = node_eval_start_offset(node)
             end_offset = node_eval_end_offset(node)
             if start_offset == None:
-                logger.warning("No execution analysis for {} because no execution start point found:\n{}".format(
-                    node.nodeName,
+                logger.warning(f"{filename}: No execution analysis for {node.nodeName} because no execution start point found")
+                logger.debug("Node XML:\n{}".format(
                     node.toxml()
                 ))
             if end_offset == None:
-                logger.warning("No execution analysis for {} because no execution end point found:\n{}".format(
-                    node.nodeName,
+                logger.warning(f"{filename}: No execution analysis for {node.nodeName} because no execution end point found")
+                logger.debug("Node XML:\n{}".format(
                     node.toxml()
                 ))
             if start_offset != None and end_offset != None:

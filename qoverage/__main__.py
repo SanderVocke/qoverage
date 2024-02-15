@@ -79,7 +79,7 @@ def instrument(args, logger, debug):
             # fails
             with open(db_js_filename, 'w') as f:
                 pass
-            pre_annotated, ast_str = pre_annotate(contents, qmldom, debug=debug)
+            pre_annotated, ast_str = pre_annotate(contents, qmldom, debug=debug, filename=qml_file)
             annotated,runtime_db_js = final_annotate(pre_annotated, os.path.basename(db_js_filename), debug=debug)
             logger.debug('Writing instrumented file to: {}'.format(out_file))
             with open(out_file, 'w') as f:
