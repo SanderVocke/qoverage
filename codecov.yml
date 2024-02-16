@@ -1,0 +1,12 @@
+coverage:
+  status:
+    project:
+      default:
+        branches:
+          - master
+        informational: true
+    patch:
+      default:
+        branches:
+          - master
+        informational: true
