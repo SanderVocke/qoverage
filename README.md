@@ -16,7 +16,7 @@ qoverage instrument --in-place --glob "./**/*.qml"
 ./my_qml_test | tee output.log
 
 # Generate a Cobertura-style XML report
-qoverage --report report.xml --files-path . --input output.log
+qoverage collect --report report.xml --files-path . --input output.log
 ```
 
 # Details
