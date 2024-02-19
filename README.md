@@ -34,7 +34,7 @@ A Cobertura-style XML is generated.
 
 `pip install qoverage`
 
-If you are on a non-Linux platform, you will need to install Qt separately as well and point qoverage to your `qmldom`(`.exe`) executable with the `QMLDOM` env variable.
+If you are on a non-Linux platform, you will need to install Qt separately as well and point qoverage to your `qmldom`(`.exe`) using the `--qmldom` argument.
 
 ## Status
 
