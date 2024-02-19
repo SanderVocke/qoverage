@@ -6,6 +6,21 @@ Simple code coverage for QML
 
 Qoverage is a tool to generate a simple code coverage report for QML files. It leverages Qt6's built-in parser, `qmldom`, to instrument QML files for coverage collection.
 
+# TL;DR
+
+```
+# Instrument all found QML files, modify in-place and keeps backups
+qoverage instrument --in-place --glob "./**/*.qml"   
+
+# Running now will add qoverage tracking data to the console output
+./my_qml_test | tee output.log
+
+# Generate a Cobertura-style XML report
+qoverage --report report.xml --files-path . --input output.log
+```
+
+# Details
+
 The coverage generation process is as follows:
 
 * Instrument your QML files using `qoverage instrument`;
