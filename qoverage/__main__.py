@@ -74,7 +74,7 @@ def instrument(args, logger, debug):
             os.makedirs(os.path.dirname(out_file), exist_ok=True)
         try:
             db_js_filename = out_file + '.qoverage.js'
-            ast_str_filename = out_file + '.qoverage.ast.qml'
+            ast_str_filename = out_file + '.qoverage.ast'
             # Touch the file so that it will be detected during collection, even if annotation
             # fails
             with open(db_js_filename, 'w') as f:
