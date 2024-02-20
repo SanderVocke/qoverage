@@ -64,6 +64,7 @@ Note that for the time being, the tool is not rigorously tested. False positives
 
 ## Known issues
 
+* Recently a quite big known issue was found: It currently doesn't work with `qmltestrunner`. It had only been tested with `qml` as a runner and with a custom Python test runner. This will be addressed soon (see #55).
 * False negatives may happen, either because of an incomplete instrumentation or because of the fact that Qoverage relies on the Application.aboutToQuit signal to dump its results. The timing of this event w.r.t. the rest of the application exiting is not completely known.
 * Double positives (multiple hits although only one real hit happened) may also happen because of different instrumentations overlapping on the same line.
 * Imported Javascript files are currently not instrumented or included in the report, because `qmldom` does not support them. Working on a workaround solution for this. For now, unit tests were written for imported Javascript but these fail for the time being.
