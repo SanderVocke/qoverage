@@ -1,0 +1,2 @@
+module Singly
+singleton Singly 1.0 Singly.qml

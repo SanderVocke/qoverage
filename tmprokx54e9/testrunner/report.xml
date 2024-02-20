@@ -1,0 +1,24 @@
+<?xml version="1.0" ?>
+<!DOCTYPE coverage
+  SYSTEM 'http://cobertura.sourceforge.net/xml/coverage-04.dtd'>
+<coverage line-rate="0.0" branch-rate="0" lines-covered="0" lines-valid="0" branches-covered="0" branches-valid="0" complexity="0" version="6.5.0" timestamp="0">
+  <sources>
+    <source>.</source>
+  </sources>
+  <packages>
+    <package name="." line-rate="0.0" branch-rate="0" complexity="0">
+      <classes>
+        <class name="tst_simple.qml" filename="tst_simple.qml" line-rate="0.0" branch-rate="0" complexity="0">
+          <methods/>
+          <lines>
+            <line number="4" hits="0"/>
+            <line number="8" hits="0"/>
+            <line number="13" hits="0"/>
+            <line number="14" hits="0"/>
+            <line number="15" hits="0"/>
+          </lines>
+        </class>
+      </classes>
+    </package>
+  </packages>
+</coverage>
