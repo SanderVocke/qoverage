@@ -188,12 +188,12 @@ def pre_annotate(contents, qmldom : QMLDom = None, filename='(unknown file)', de
                 id = node_as(children_filter_nodes(parent_definition)[0], 'UiQualifiedId')
                 if id:
                     name = id.getAttribute('name')
+                    entered_object = name
                     global objects_blacklist
                     if name not in objects_blacklist:
                         add_annotation(token_offset(node, 'lbraceToken') + 1, start_obj_annotation(annotation_id))
                         add_annotation(token_offset(node, 'rbraceToken'), end_obj_annotation(annotation_id))
                         next_annotation()
-                        entered_object = name
         
         elif is_single_statement(node):
             # This should only happen as a result of visiting a UI script binding or e.g. if/else branch without block.
