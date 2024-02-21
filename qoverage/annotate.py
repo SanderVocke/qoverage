@@ -19,6 +19,23 @@ block_with_return_start_tag='OPEN_RETURN_BLOCK'
 block_start_tag='OPEN_BLOCK'
 block_end_tag='CLOSE_BLOCK'
 
+# Don't annotate these objects (usually they are attached properties, qmldom doesn't know the difference)
+objects_blacklist = [
+    'anchors',
+    'drag',
+    'Timer',
+    'Repeater',
+    'Connections',
+    'Component'
+]
+
+# Don't annotate these properties. They are represented as
+# regexes, to be compared with found properties which are formatted as ObjectName::propertyName.
+properties_blacklist = [
+    'TestCase::name', # Must be a literal string for qmltestrunner
+    '.*::id',         # id's should always be literals
+]
+
 def format_annotation(tag, id):
     return ' /*@QOVERAGE:{}:{}*/ '.format(tag, id)
 
@@ -98,9 +115,10 @@ def pre_annotate(contents, qmldom : QMLDom = None, filename='(unknown file)', de
         
         return new_contents
 
-    def visit_node(node):
+    def visit_node(node, object_stack=[]):
         # By default, visit all children. Special cases may override below
         children_to_visit = children_filter_nodes(node)
+        entered_object = None
 
         # Special cases
         if node.nodeName == 'StatementList':
@@ -163,15 +181,19 @@ def pre_annotate(contents, qmldom : QMLDom = None, filename='(unknown file)', de
         elif node.nodeName == 'UiObjectInitializer':
             # For object initializers, we want to mark the opening and closing braces
             # of the object. We still visit all its children too.
+            # in addition, also keep a stack of objects so we always know what our current
+            # object is.
             parent_definition = parent_as(node, 'UiObjectDefinition')
             if parent_definition:
                 id = node_as(children_filter_nodes(parent_definition)[0], 'UiQualifiedId')
                 if id:
                     name = id.getAttribute('name')
-                    if name not in [ 'anchors', 'drag', 'Timer', 'Repeater', 'Connections', 'Component' ]:
+                    global objects_blacklist
+                    if name not in objects_blacklist:
                         add_annotation(token_offset(node, 'lbraceToken') + 1, start_obj_annotation(annotation_id))
                         add_annotation(token_offset(node, 'rbraceToken'), end_obj_annotation(annotation_id))
                         next_annotation()
+                        entered_object = name
         
         elif is_single_statement(node):
             # This should only happen as a result of visiting a UI script binding or e.g. if/else branch without block.
@@ -194,7 +216,10 @@ def pre_annotate(contents, qmldom : QMLDom = None, filename='(unknown file)', de
                     # Script bindings need the result value to be returned.
                     # Exception is the id: binding, which is special and may not have any function block.
                     field = children_filter_nodes(parent_as(node, 'UiScriptBinding'))[0].getAttribute('name')
-                    if field != 'id':
+                    object_name = object_stack[-1] if len(object_stack) > 0 else None
+                    formatted_field = object_name + '::' + field if object_name else field
+                    # If the property matches any in our blacklist, don't annotate it.
+                    if len(list(filter(lambda x: re.match(x, formatted_field), properties_blacklist))) == 0:
                         add_annotation(start_offset, block_open_with_return_annotation(annotation_id))
                         add_annotation(end_offset, block_close_annotation(annotation_id))
                         next_annotation()
@@ -213,8 +238,11 @@ def pre_annotate(contents, qmldom : QMLDom = None, filename='(unknown file)', de
                     add_annotation(end_offset, block_close_annotation(annotation_id))
                     next_annotation()
         
+        new_object_stack = copy.copy(object_stack)
+        if entered_object:
+            new_object_stack.append(entered_object)
         for child in children_to_visit:
-            visit_node(child)
+            visit_node(child, new_object_stack)
 
     visit_node(dom)
     
@@ -311,7 +339,8 @@ def final_annotate(pre_annotated: str, db_lib_name: str, debug=False) -> str:
             return r'; QoverageCollector.trace_exec_block(\1); '
 
     # Do the actual code injection
-    result = "{}\n\n{}".format(
+    result = "{}\n{}\n\n{}".format(
+        'import QoverageSingleton 1.0 as QoverageSingleton',
         'import "./{}" as QoverageCollector'.format(db_lib_name),
         result
     )

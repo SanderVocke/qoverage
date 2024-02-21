@@ -26,7 +26,9 @@ class QoverageDefaultFileCollector {
         })
     }
 
-    report() {
+    on_about_to_quit() {
+        // Report our line coverage.
+
         // Note: from experience, throwing an error is the most reliable
         // way to get text to the console. Console.log seems to not always
         // work in different types of Qt apps.
@@ -56,18 +58,22 @@ class QoverageCollector {
             this.collector = qoverage_collector_factory.create_file_collector(filename, data)
         } catch (e) {
             this.collector = new QoverageDefaultFileCollector(filename, data)
-            Qt.application.aboutToQuit.connect(() => {
-                this.collector.report()
-            })
         }
+
+        // We rely on destruction of a singleton to detect when we are about to get
+        // de-initialized.
+        if (!QoverageSingleton.QoverageSingleton) {
+            throw new Error("QoverageSingleton not defined; did you add qoverage's QML directory to your QML import path?")
+        }
+        QoverageSingleton.QoverageSingleton.onAboutToQuit.connect(() => this.on_about_to_quit())
     }
 
     trace(annotation_id) {
         this.collector.trace(this.ids_to_lines[annotation_id])
     }
 
-    report() {
-        this.collector.report()
+    on_about_to_quit() {
+        this.collector.on_about_to_quit()
     }
 }
 

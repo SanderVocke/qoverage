@@ -10,7 +10,10 @@ Qoverage is a tool to generate a simple code coverage report for QML files. It l
 
 ```
 # Instrument all found QML files, modify in-place and keeps backups
-qoverage instrument --in-place --glob "./**/*.qml"   
+qoverage instrument --in-place --glob "./**/*.qml"
+
+# The instrumented code needs to find Qoverage's built-in QML types
+export QML_IMPORT_PATH=$(qoverage --importpath)
 
 # Running now will add qoverage tracking data to the console output
 ./my_qml_test | tee output.log
