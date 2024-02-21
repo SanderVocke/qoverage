@@ -1,0 +1,2 @@
+module QoverageSingleton
+singleton QoverageSingleton 1.0 QoverageSingleton.qml

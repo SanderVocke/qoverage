@@ -339,7 +339,8 @@ def final_annotate(pre_annotated: str, db_lib_name: str, debug=False) -> str:
             return r'; QoverageCollector.trace_exec_block(\1); '
 
     # Do the actual code injection
-    result = "{}\n\n{}".format(
+    result = "{}\n{}\n\n{}".format(
+        'import QoverageSingleton 1.0 as QoverageSingleton',
         'import "./{}" as QoverageCollector'.format(db_lib_name),
         result
     )
