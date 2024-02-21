@@ -67,7 +67,7 @@ Note that for the time being, the tool is not rigorously tested. False positives
 
 Depending on the situation, extra steps may be required in order to get the tracked coverage data out.
 
-The default method for this is that the instrumented Javascript code listens for the Application.aboutToQuit signal, and when it comes, dumps its coverage data to the console by throwing a Javascript error (this seems more reliable than console.log). This method works e.g. when running the examples in this codebase using the `qml` executable.
+The default method for this is that the instrumented code creates a QML singleton and listens for its Component.onDestruction signal, and when it comes, dumps its coverage data to the console by throwing a Javascript error (this seems more reliable than console.log). This method works e.g. when running the examples in this codebase using the `qml` or `qmltestrunner` executable.
 
 If for whatever reason this does not work:
 - Ensure no debug logging filters are blocking console messages/exceptions from appearing: `QT_LOGGING_RULES="*.debug=true; qt.*.debug=false"`
