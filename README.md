@@ -15,23 +15,13 @@ qoverage instrument --in-place --glob "./**/*.qml"
 # The instrumented code needs to find Qoverage's built-in QML types
 export QML_IMPORT_PATH=$(qoverage --importpath)
 
-# Running now will add qoverage tracking data to the console output
+# Running now will add qoverage tracking data to the console output.
+# You should see some lines at the end of the form "...<QOVERAGERESULT>... "
 ./my_qml_test | tee output.log
 
 # Generate a Cobertura-style XML report
 qoverage collect --report report.xml --files-path . --input output.log
 ```
-
-# Details
-
-The coverage generation process is as follows:
-
-* Instrument your QML files using `qoverage instrument`;
-* Run your command or tests in either of the following two ways:
-  1. Normal run while saving all console output. Afterward, generate a report from the output using `qoverage collect`.
-  2. Wrapped run by `qoverage collect -- CMD`, generating the report right away.
-
-A Cobertura-style XML is generated.
 
 ## Installation
 
@@ -67,7 +57,6 @@ Note that for the time being, the tool is not rigorously tested. False positives
 
 ## Known issues
 
-* Recently a quite big known issue was found: It currently doesn't work with `qmltestrunner`. It had only been tested with `qml` as a runner and with a custom Python test runner. This will be addressed soon (see #55).
 * False negatives may happen, either because of an incomplete instrumentation or because of the fact that Qoverage relies on the Application.aboutToQuit signal to dump its results. The timing of this event w.r.t. the rest of the application exiting is not completely known.
 * Double positives (multiple hits although only one real hit happened) may also happen because of different instrumentations overlapping on the same line.
 * Imported Javascript files are currently not instrumented or included in the report, because `qmldom` does not support them. Working on a workaround solution for this. For now, unit tests were written for imported Javascript but these fail for the time being.
