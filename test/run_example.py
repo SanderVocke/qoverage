@@ -15,6 +15,7 @@ QMLTESTRUNNER = os.environ.get("QMLTESTRUNNER", "qmltestrunner")
 DUMP_RUN_LOG = os.environ.get("DUMP_RUN_LOG", "0") != "0"
 OUTPUT_DIR = os.environ.get("OUTPUT_DIR", tempfile.mkdtemp())
 REPORT_XML = os.environ.get("REPORT_XML", f"{OUTPUT_DIR}/report.xml")
+QML_IMPORT_PATH = os.environ.get("QML_IMPORT_PATH", "")
 
 print(f"Using qoverage command: {QOVERAGE}")
 print(f"Using qml command: {QML}")
@@ -22,6 +23,7 @@ print(f"Using qmltestrunner command: {QMLTESTRUNNER}")
 print(f"Script dir: {script_dir}")
 print(f"Working dir: {os.getcwd()}")
 print(f"Output dir: {OUTPUT_DIR}")
+print(f"QML_IMPORT_PATH env: {QML_IMPORT_PATH}")
 
 def run_and_check(step, command, maybe_write_log=None):
     print(f"{step}:\n  -> {command}")

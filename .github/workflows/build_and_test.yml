@@ -74,7 +74,7 @@ jobs:
           QT_QPA_PLATFORM=vnc
           QML=/usr/lib/qt6/bin/qml
           QMLTESTRUNNER=/usr/lib/qt6/bin/qmltestrunner
-          QML_IMPORT_PATH=$(pwd)/qoverage/qml_import
+          QML_IMPORT_PATH=$(python -m qoverage --importpath)
           COVERAGE_PROCESS_START=.coveragerc
           python -m coverage run -m pytest . --junit-xml=pytest.xml --verbose
           -k 'test_example[for]'

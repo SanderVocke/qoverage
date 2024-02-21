@@ -207,6 +207,7 @@ def main():
             description="Code coverage for QML"
         )
         parser.add_argument('-v', '--verbose', action='store_true', help='Print debug messages')
+        parser.add_argument('--importpath', action='store_true', help='Print the QML import path needed to run instrumented code and exit.')
         
         subparsers = parser.add_subparsers(help='sub-command help', dest='command')
 
@@ -242,6 +243,13 @@ def main():
             my_args = my_args[:separator_index]
 
         args = parser.parse_args(my_args)
+
+        if args.importpath:
+            print(os.path.join(
+                os.path.dirname(os.path.realpath(__file__)),
+                'qml_import'
+            ))
+            exit(0)
         
         QOVERAGE_LOGLEVEL = os.environ.get('QOVERAGE_LOGLEVEL', 'INFO').upper()
         if args.verbose:
