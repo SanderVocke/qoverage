@@ -77,7 +77,6 @@ jobs:
           QML_IMPORT_PATH=$(python -m qoverage --importpath)
           COVERAGE_PROCESS_START=.coveragerc
           python -m coverage run -m pytest . --junit-xml=pytest.xml --verbose
-          -k 'test_example[for]'
       
       - name: Generate Pytest coverage report
         run: |
