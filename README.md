@@ -15,23 +15,13 @@ qoverage instrument --in-place --glob "./**/*.qml"
 # The instrumented code needs to find Qoverage's built-in QML types
 export QML_IMPORT_PATH=$(qoverage --importpath)
 
-# Running now will add qoverage tracking data to the console output
+# Running now will add qoverage tracking data to the console output.
+# You should see some lines at the end of the form "...<QOVERAGERESULT>... "
 ./my_qml_test | tee output.log
 
 # Generate a Cobertura-style XML report
 qoverage collect --report report.xml --files-path . --input output.log
 ```
-
-# Details
-
-The coverage generation process is as follows:
-
-* Instrument your QML files using `qoverage instrument`;
-* Run your command or tests in either of the following two ways:
-  1. Normal run while saving all console output. Afterward, generate a report from the output using `qoverage collect`.
-  2. Wrapped run by `qoverage collect -- CMD`, generating the report right away.
-
-A Cobertura-style XML is generated.
 
 ## Installation
 
