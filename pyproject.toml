@@ -1,6 +1,6 @@
 [project]
 name = "qoverage"
-version = "0.1.11"
+version = "0.1.12"
 description = "Code coverage for QML"
 readme = "README.md"
 license = { "file" = "LICENSE" }
@@ -52,4 +52,4 @@ include = ["qoverage"]
 exclude = []
 
 [tool.setuptools.package-data]
-qoverage = ["templates/*", "bundled_qmldom/qmldom"]
+qoverage = ["templates/*", "qml_import/*", "bundled_qmldom/qmldom"]
