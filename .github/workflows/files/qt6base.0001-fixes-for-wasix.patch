@@ -1,0 +1,581 @@
+From 1820f0502b35f958e20e32b3f39ef7bef5ded8a3 Mon Sep 17 00:00:00 2001
+From: Builder <builder@nothing.com>
+Date: Thu, 7 Sep 2023 14:20:39 +0000
+Subject: [PATCH] fixes
+
+---
+ cmake/QtPublicWasmToolchainHelpers.cmake      | 20 +++---
+ cmake/QtToolHelpers.cmake                     |  7 +-
+ cmake/QtWasmHelpers.cmake                     | 32 ++++-----
+ mkspecs/common/posix/qplatformdefs.h          | 14 ++++
+ src/3rdparty/forkfd/forkfd.c                  |  3 +
+ src/3rdparty/forkfd/forkfd_linux.c            |  5 ++
+ src/corelib/CMakeLists.txt                    |  1 -
+ src/corelib/global/qlogging.cpp               |  9 ++-
+ src/corelib/global/qtenvironmentvariables.cpp |  8 +++
+ src/corelib/io/qfilesystemengine_unix.cpp     |  9 ++-
+ src/corelib/io/qlockfile_unix.cpp             |  5 ++
+ src/corelib/io/qprocess_unix.cpp              | 18 +++--
+ src/corelib/io/qstorageinfo_unix.cpp          |  5 ++
+ src/corelib/plugin/qlibrary_unix.cpp          |  1 +
+ src/corelib/thread/qthread_unix.cpp           |  8 ++-
+ src/corelib/time/qdatetime.cpp                |  4 ++
+ src/network/CMakeLists.txt                    | 70 +++++++++----------
+ 17 files changed, 145 insertions(+), 74 deletions(-)
+
+diff --git a/cmake/QtPublicWasmToolchainHelpers.cmake b/cmake/QtPublicWasmToolchainHelpers.cmake
+index 4ed223ed8a..b43eb98f27 100644
+--- a/cmake/QtPublicWasmToolchainHelpers.cmake
++++ b/cmake/QtPublicWasmToolchainHelpers.cmake
+@@ -94,15 +94,15 @@ function(__qt_internal_get_qt_build_emsdk_version out_var)
+ endfunction()
+ 
+ function(_qt_test_emscripten_version)
+-    __qt_internal_get_emcc_recommended_version(_recommended_emver)
+-    __qt_internal_get_emroot_path_suffix_from_emsdk_env(emroot_path)
+-    __qt_internal_query_emsdk_version("${emroot_path}" TRUE current_emsdk_ver)
+-    __qt_internal_get_qt_build_emsdk_version(qt_build_emcc_version)
++    #__qt_internal_get_emcc_recommended_version(_recommended_emver)
++    #__qt_internal_get_emroot_path_suffix_from_emsdk_env(emroot_path)
++    #__qt_internal_query_emsdk_version("${emroot_path}" TRUE current_emsdk_ver)
++    #__qt_internal_get_qt_build_emsdk_version(qt_build_emcc_version)
+ 
+-    if(NOT "${qt_build_emcc_version}" STREQUAL "${current_emsdk_ver}")
+-        message("Qt Wasm built with Emscripten version: ${qt_build_emcc_version}")
+-        message("You are using Emscripten version: ${current_emsdk_ver}")
+-        message("The recommended version of Emscripten for this Qt is: ${_recommended_emver}")
+-        message("This may not work correctly")
+-    endif()
++    #if(NOT "${qt_build_emcc_version}" STREQUAL "${current_emsdk_ver}")
++    #    message("Qt Wasm built with Emscripten version: ${qt_build_emcc_version}")
++    #    message("You are using Emscripten version: ${current_emsdk_ver}")
++    #    message("The recommended version of Emscripten for this Qt is: ${_recommended_emver}")
++    #    message("This may not work correctly")
++    #endif()
+ endfunction()
+diff --git a/cmake/QtToolHelpers.cmake b/cmake/QtToolHelpers.cmake
+index 9fa84146b8..ca702e6090 100644
+--- a/cmake/QtToolHelpers.cmake
++++ b/cmake/QtToolHelpers.cmake
+@@ -50,7 +50,8 @@ function(qt_internal_add_tool target_name)
+         INSTALL_VERSIONED_LINK
+         EXCEPTIONS
+         NO_UNITY_BUILD
+-        TRY_RUN)
++        TRY_RUN
++        FORCE_BUILD)
+     set(one_value_keywords
+         TOOLS_TARGET
+         INSTALL_DIR
+@@ -71,7 +72,7 @@ function(qt_internal_add_tool target_name)
+ 
+     qt_internal_find_tool(will_build_tools ${target_name} "${arg_TOOLS_TARGET}")
+ 
+-    if(NOT will_build_tools)
++    if(NOT will_build_tools AND NOT arg_FORCE_BUILD)
+         return()
+     endif()
+ 
+@@ -503,7 +504,7 @@ function(qt_check_if_tools_will_be_built)
+         set(will_build_tools FALSE)
+         if(QT_FORCE_BUILD_TOOLS)
+             set(will_build_tools TRUE)
+-            set(need_target_rename TRUE)
++            set(need_target_rename FALSE)
+         endif()
+     else()
+         set(will_build_tools TRUE)
+diff --git a/cmake/QtWasmHelpers.cmake b/cmake/QtWasmHelpers.cmake
+index 2b3a97987f..b0923d84f2 100644
+--- a/cmake/QtWasmHelpers.cmake
++++ b/cmake/QtWasmHelpers.cmake
+@@ -11,7 +11,7 @@ function (qt_internal_setup_wasm_target_properties wasmTarget)
+     "SHELL:-s WASM_BIGINT=1"
+     "SHELL:-s STACK_SIZE=5MB")
+ 
+-    target_link_libraries("${wasmTarget}" INTERFACE embind)
++    #target_link_libraries("${wasmTarget}" INTERFACE embind)
+ 
+     ## wasm64
+     if (WASM64)
+@@ -31,12 +31,12 @@ function (qt_internal_setup_wasm_target_properties wasmTarget)
+     endif()
+ 
+     # wasm exceptions
+-    if (QT_FEATURE_wasm_exceptions)
+-        target_compile_options("${wasmTarget}" INTERFACE -fwasm-exceptions)
+-        target_link_options("${wasmTarget}" INTERFACE -fwasm-exceptions)
+-    else()
++    #if (QT_FEATURE_wasm_exceptions)
++    #    target_compile_options("${wasmTarget}" INTERFACE -fwasm-exceptions)
++    #    target_link_options("${wasmTarget}" INTERFACE -fwasm-exceptions)
++    #else()
+         target_link_options("${wasmTarget}" INTERFACE "SHELL:-s DISABLE_EXCEPTION_CATCHING=1")
+-    endif()
++    #endif()
+ 
+     if (QT_FEATURE_thread)
+         target_compile_options("${wasmTarget}" INTERFACE "SHELL:-pthread")
+@@ -46,19 +46,19 @@ function (qt_internal_setup_wasm_target_properties wasmTarget)
+     target_link_options("${wasmTarget}" INTERFACE "SHELL:-s ALLOW_MEMORY_GROWTH")
+ 
+     # debug add_compile_options
+-    if ("QT_WASM_SOURCE_MAP=1" IN_LIST QT_QMAKE_DEVICE_OPTIONS)
+-        set(WASM_SOURCE_MAP_BASE "http://localhost:8000/")
++    #if ("QT_WASM_SOURCE_MAP=1" IN_LIST QT_QMAKE_DEVICE_OPTIONS)
++    #    set(WASM_SOURCE_MAP_BASE "http://localhost:8000/")
+ 
+-        if(DEFINED QT_WASM_SOURCE_MAP_BASE)
+-            set(WASM_SOURCE_MAP_BASE "${QT_WASM_SOURCE_MAP_BASE}")
+-        endif()
++    #    if(DEFINED QT_WASM_SOURCE_MAP_BASE)
++    #        set(WASM_SOURCE_MAP_BASE "${QT_WASM_SOURCE_MAP_BASE}")
++    #    endif()
+ 
+         # Pass --source-map-base on the linker line. This informs the
+         # browser where to find the source files when debugging.
+         # -g4 to make source maps for debugging
+-        target_link_options("${wasmTarget}" INTERFACE  "-gsource-map" "--source-map-base" "${WASM_SOURCE_MAP_BASE}")
++    #    target_link_options("${wasmTarget}" INTERFACE  "-gsource-map" "--source-map-base" "${WASM_SOURCE_MAP_BASE}")
+ 
+-    endif()
++    #endif()
+ 
+     # a few good defaults to make console more verbose while debugging
+     target_link_options("${wasmTarget}" INTERFACE $<$<CONFIG:Debug>:
+@@ -121,9 +121,9 @@ function (qt_internal_setup_wasm_target_properties wasmTarget)
+ endfunction()
+ 
+ function(qt_internal_wasm_add_finalizers target)
+-    qt_add_list_file_finalizer(_qt_internal_set_wasm_export_name ${target})
+-    qt_add_list_file_finalizer(_qt_internal_add_wasm_extra_exported_methods ${target})
+-    qt_add_list_file_finalizer(_qt_internal_wasm_add_target_helpers ${target})
++    #qt_add_list_file_finalizer(_qt_internal_set_wasm_export_name ${target})
++    #qt_add_list_file_finalizer(_qt_internal_add_wasm_extra_exported_methods ${target})
++    #qt_add_list_file_finalizer(_qt_internal_wasm_add_target_helpers ${target})
+ endfunction()
+ 
+ 
+diff --git a/mkspecs/common/posix/qplatformdefs.h b/mkspecs/common/posix/qplatformdefs.h
+index ffae2ac37a..59946424b8 100644
+--- a/mkspecs/common/posix/qplatformdefs.h
++++ b/mkspecs/common/posix/qplatformdefs.h
+@@ -12,6 +12,16 @@
+ #endif
+ #include <sys/stat.h>
+ 
++#ifdef WASIX
++#include <dirent.h>
++#include <unistd.h>
++#include <fcntl.h>
++#include <grp.h>
++#include <sys/ioctl.h>
++#undef QT_LARGEFILE_SUPPORT
++#undef QT_HAS_THREAD_PRIORITY_SCHEDULING
++#endif
++
+ #if defined(QT_USE_XOPEN_LFS_EXTENSIONS) && defined(QT_LARGEFILE_SUPPORT)
+ 
+ #define QT_STATBUF              struct stat64
+@@ -85,7 +95,11 @@
+ #define QT_READ                 ::read
+ #define QT_WRITE                ::write
+ 
++#ifdef WASIX
++#define QT_OPEN_LARGEFILE       0
++#else
+ #define QT_OPEN_LARGEFILE       O_LARGEFILE
++#endif
+ #define QT_OPEN_RDONLY          O_RDONLY
+ #define QT_OPEN_WRONLY          O_WRONLY
+ #define QT_OPEN_RDWR            O_RDWR
+diff --git a/src/3rdparty/forkfd/forkfd.c b/src/3rdparty/forkfd/forkfd.c
+index edef3c5bcc..a031b7b71d 100644
+--- a/src/3rdparty/forkfd/forkfd.c
++++ b/src/3rdparty/forkfd/forkfd.c
+@@ -71,6 +71,9 @@
+ #if !defined(WEXITED) || !defined(WNOWAIT)
+ #  undef HAVE_WAITID
+ #endif
++#if WASIX
++#undef HAVE_WAITID
++#endif
+ 
+ #if (defined(__FreeBSD__) && defined(__FreeBSD_version) && __FreeBSD_version >= 1300000)
+ #  include <sys/eventfd.h>
+diff --git a/src/3rdparty/forkfd/forkfd_linux.c b/src/3rdparty/forkfd/forkfd_linux.c
+index cc7af6cb53..2e01027b78 100644
+--- a/src/3rdparty/forkfd/forkfd_linux.c
++++ b/src/3rdparty/forkfd/forkfd_linux.c
+@@ -62,9 +62,14 @@ static ffd_atomic_int system_forkfd_state = FFD_ATOMIC_INIT(0);
+ static int sys_waitid(int which, int pid_or_pidfd, siginfo_t *infop, int options,
+                       struct rusage *ru)
+ {
++#ifdef WASIX
++    // TODO map to wait3, wait4
++    return 0;
++#else
+     /* use the waitid raw system call, which has an extra parameter that glibc
+      * doesn't offer to us */
+     return syscall(__NR_waitid, which, pid_or_pidfd, infop, options, ru);
++#endif
+ }
+ 
+ static int sys_clone(unsigned long cloneflags, int *ptid)
+diff --git a/src/corelib/CMakeLists.txt b/src/corelib/CMakeLists.txt
+index f5c4ef6e7d..efd8a91098 100644
+--- a/src/corelib/CMakeLists.txt
++++ b/src/corelib/CMakeLists.txt
+@@ -458,7 +458,6 @@ set(core_version_tagging_files
+     global/qversiontagging.cpp
+     global/qversiontagging.h)
+ qt_internal_extend_target(Core
+-    CONDITION TEST_ld_version_script OR APPLE OR WIN32
+     SOURCES ${core_version_tagging_files}
+ )
+ 
+diff --git a/src/corelib/global/qlogging.cpp b/src/corelib/global/qlogging.cpp
+index a7a057fcd6..2325ea13c5 100644
+--- a/src/corelib/global/qlogging.cpp
++++ b/src/corelib/global/qlogging.cpp
+@@ -80,7 +80,14 @@ extern char *__progname;
+ #  define QLOGGING_HAVE_BACKTRACE
+ #endif
+ 
+-#if defined(Q_OS_LINUX) && (defined(__GLIBC__) || __has_include(<sys/syscall.h>))
++#if(WASIX)
++# include <wasi/api_wasix.h>
++static long qt_gettid() {
++    __wasi_tid_t r;
++    __wasi_thread_id(&r);
++    return (long)r;
++}
++#elif defined(Q_OS_LINUX) && (defined(__GLIBC__) || __has_include(<sys/syscall.h>))
+ #  include <sys/syscall.h>
+ 
+ # if defined(Q_OS_ANDROID) && !defined(SYS_gettid)
+diff --git a/src/corelib/global/qtenvironmentvariables.cpp b/src/corelib/global/qtenvironmentvariables.cpp
+index 47fc8f7eec..790ee7c336 100644
+--- a/src/corelib/global/qtenvironmentvariables.cpp
++++ b/src/corelib/global/qtenvironmentvariables.cpp
+@@ -12,6 +12,14 @@
+ 
+ #include <QtCore/private/qlocking_p.h>
+ 
++#ifdef WASIX
++
++const char* tzname[2] = {
++   "TZ", "TZ"
++};
++
++#endif
++
+ QT_BEGIN_NAMESPACE
+ 
+ // In the C runtime on all platforms access to the environment is not thread-safe. We
+diff --git a/src/corelib/io/qfilesystemengine_unix.cpp b/src/corelib/io/qfilesystemengine_unix.cpp
+index a3d71aeeab..965073b608 100644
+--- a/src/corelib/io/qfilesystemengine_unix.cpp
++++ b/src/corelib/io/qfilesystemengine_unix.cpp
+@@ -59,6 +59,8 @@ extern "C" NSString *NSTemporaryDirectory();
+ #if defined(Q_OS_LINUX)
+ #  include <sys/ioctl.h>
+ #  include <sys/sendfile.h>
++
++#ifndef WASIX
+ #  include <linux/fs.h>
+ 
+ // in case linux/fs.h is too old and doesn't define it:
+@@ -66,6 +68,7 @@ extern "C" NSString *NSTemporaryDirectory();
+ #  define FICLONE       _IOW(0x94, 9, int)
+ #endif
+ #endif
++#endif
+ 
+ #if defined(Q_OS_ANDROID)
+ // statx() is disabled on Android because quite a few systems
+@@ -529,6 +532,7 @@ void QFileSystemMetaData::fillFromDirEnt(const QT_DIRENT &entry)
+ 
+     case DT_CHR:
+     case DT_FIFO:
++#ifndef WASIX
+     case DT_SOCK:
+         // ### System attribute
+         knownFlagsMask = QFileSystemMetaData::LinkType
+@@ -543,7 +547,7 @@ void QFileSystemMetaData::fillFromDirEnt(const QT_DIRENT &entry)
+             | QFileSystemMetaData::ExistsAttribute;
+ 
+         break;
+-
++#endif
+     case DT_LNK:
+         knownFlagsMask = QFileSystemMetaData::LinkType;
+         entryFlags = QFileSystemMetaData::LinkType;
+@@ -1044,9 +1048,12 @@ bool QFileSystemEngine::cloneFile(int srcfd, int dstfd, const QFileSystemMetaDat
+     }
+ 
+ #if defined(Q_OS_LINUX)
++    
++#ifndef WASIX
+     // first, try FICLONE (only works on regular files and only on certain fs)
+     if (::ioctl(dstfd, FICLONE, srcfd) == 0)
+         return true;
++#endif
+ 
+     // Second, try sendfile (it can send to some special types too).
+     // sendfile(2) is limited in the kernel to 2G - 4k
+diff --git a/src/corelib/io/qlockfile_unix.cpp b/src/corelib/io/qlockfile_unix.cpp
+index 47aff8b973..0b910bc5d9 100644
+--- a/src/corelib/io/qlockfile_unix.cpp
++++ b/src/corelib/io/qlockfile_unix.cpp
+@@ -29,6 +29,11 @@
+ #  undef LOCK_NB
+ #endif
+ 
++#ifdef WASIX
++#undef LOCK_EX
++#undef LOCK_NB
++#endif
++
+ #include <sys/types.h> // kill
+ #include <signal.h>    // kill
+ #include <unistd.h>    // gethostname
+diff --git a/src/corelib/io/qprocess_unix.cpp b/src/corelib/io/qprocess_unix.cpp
+index 91a745d522..389c5ec1df 100644
+--- a/src/corelib/io/qprocess_unix.cpp
++++ b/src/corelib/io/qprocess_unix.cpp
+@@ -820,8 +820,10 @@ static const char *applyProcessParameters(const QProcess::UnixProcessParameters
+             // allocates memory. Using getdents(2) plus either strtoul() or
+             // std::from_chars() would be acceptable.
+             int max_fd = INT_MAX;
++#ifndef WASIX
+             if (struct rlimit limit; getrlimit(RLIMIT_NOFILE, &limit) == 0)
+                 max_fd = limit.rlim_cur;
++#endif
+             for ( ; fd < max_fd; ++fd)
+                 close(fd);
+         }
+@@ -833,6 +835,7 @@ static const char *applyProcessParameters(const QProcess::UnixProcessParameters
+             return "setsid";
+     }
+ 
++#ifndef WASIX
+     // Disconnect from the controlling TTY. This probably won't fail. Must be
+     // done after the session settings from above.
+     if (params.flags.testFlag(QProcess::UnixProcessFlag::DisconnectControllingTerminal)) {
+@@ -847,6 +850,7 @@ static const char *applyProcessParameters(const QProcess::UnixProcessParameters
+             }
+         }
+     }
++#endif
+ 
+     // Apply UID and GID parameters last. This isn't expected to fail either:
+     // either we're trying to impersonate what we already are, or we're EUID or
+@@ -863,14 +867,14 @@ static const char *applyProcessParameters(const QProcess::UnixProcessParameters
+ // the noexcept here adds an extra layer of protection
+ static void callChildProcessModifier(const QProcessPrivate *d) noexcept
+ {
+-    QT_TRY {
++    //QT_TRY {
+         if (d->unixExtras->childProcessModifier)
+             d->unixExtras->childProcessModifier();
+-    } QT_CATCH (std::exception &e) {
+-        failChildProcess(d, e.what(), FakeErrnoForThrow);
+-    } QT_CATCH (...) {
+-        failChildProcess(d, "throw", FakeErrnoForThrow);
+-    }
++    //} QT_CATCH (std::exception &e) {
++    //    failChildProcess(d, e.what(), FakeErrnoForThrow);
++    //} QT_CATCH (...) {
++    //    failChildProcess(d, "throw", FakeErrnoForThrow);
++    //}
+ }
+ 
+ // IMPORTANT:
+@@ -886,9 +890,11 @@ void QChildProcess::startProcess() const noexcept
+     // make sure this fd is closed if execv() succeeds
+     qt_safe_close(d->childStartedPipe[0]);
+ 
++#ifndef WASIX
+     // enter the working directory
+     if (workingDirectory >= 0 && fchdir(workingDirectory) == -1)
+         failChildProcess(d, "fchdir", errno);
++#endif
+ 
+     bool sigpipeHandled = false;
+     bool sigmaskHandled = false;
+diff --git a/src/corelib/io/qstorageinfo_unix.cpp b/src/corelib/io/qstorageinfo_unix.cpp
+index 3c80c31453..5f4d9c81ae 100644
+--- a/src/corelib/io/qstorageinfo_unix.cpp
++++ b/src/corelib/io/qstorageinfo_unix.cpp
+@@ -3,6 +3,10 @@
+ // Copyright (C) 2016 Intel Corporation.
+ // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only
+ 
++// TODO, enable again and ensure in CMakeLists that qstorageinfo_stub.cpp gets
++// chosen as opposed to qstorageinfo_unix.cpp.
++#ifndef WASIX
++
+ #include "qstorageinfo_p.h"
+ 
+ #include <QtCore/qdiriterator.h>
+@@ -485,3 +489,4 @@ QList<QStorageInfo> QStorageInfoPrivate::mountedVolumes()
+ }
+ 
+ QT_END_NAMESPACE
++#endif
+diff --git a/src/corelib/plugin/qlibrary_unix.cpp b/src/corelib/plugin/qlibrary_unix.cpp
+index 84f572a003..eaf5c737ce 100644
+--- a/src/corelib/plugin/qlibrary_unix.cpp
++++ b/src/corelib/plugin/qlibrary_unix.cpp
+@@ -299,3 +299,4 @@ QFunctionPointer QLibraryPrivate::resolve_sys(const char *symbol)
+ }
+ 
+ QT_END_NAMESPACE
++
+diff --git a/src/corelib/thread/qthread_unix.cpp b/src/corelib/thread/qthread_unix.cpp
+index b0088d4ce0..060130b9d1 100644
+--- a/src/corelib/thread/qthread_unix.cpp
++++ b/src/corelib/thread/qthread_unix.cpp
+@@ -63,7 +63,7 @@
+ # define SCHED_IDLE    5
+ #endif
+ 
+-#if defined(Q_OS_DARWIN) || !defined(Q_OS_ANDROID) && !defined(Q_OS_OPENBSD) && defined(_POSIX_THREAD_PRIORITY_SCHEDULING) && (_POSIX_THREAD_PRIORITY_SCHEDULING-0 >= 0)
++#if defined(Q_OS_DARWIN) || !defined(WASIX) && !defined(Q_OS_ANDROID) && !defined(Q_OS_OPENBSD) && defined(_POSIX_THREAD_PRIORITY_SCHEDULING) && (_POSIX_THREAD_PRIORITY_SCHEDULING-0 >= 0)
+ #define QT_HAS_THREAD_PRIORITY_SCHEDULING
+ #endif
+ 
+@@ -406,6 +406,10 @@ int QThreadPrivate::idealThreadCount = 1;
+ 
+ int QThread::idealThreadCount() noexcept
+ {
++#ifdef WASIX
++    return 10;
++#else
++
+     int cores = 1;
+ 
+ #if defined(Q_OS_HPUX)
+@@ -426,6 +430,7 @@ int QThread::idealThreadCount() noexcept
+     };
+ #  endif
+ 
++
+     // get the number of threads we're assigned, not the total in the system
+     QVarLengthArray<cpu_set_t, 1> cpuset(1);
+     int size = 1;
+@@ -484,6 +489,7 @@ int QThread::idealThreadCount() noexcept
+         return 1;
+ #endif
+     return cores;
++#endif
+ }
+ 
+ void QThread::yieldCurrentThread()
+diff --git a/src/corelib/time/qdatetime.cpp b/src/corelib/time/qdatetime.cpp
+index 4afd08b65b..f1fc0b8dc2 100644
+--- a/src/corelib/time/qdatetime.cpp
++++ b/src/corelib/time/qdatetime.cpp
+@@ -35,6 +35,10 @@
+ 
+ #include <private/qtools_p.h>
+ 
++#ifdef WASIX
++#include <sys/time.h>
++#endif
++
+ QT_BEGIN_NAMESPACE
+ 
+ using namespace Qt::StringLiterals;
+diff --git a/src/network/CMakeLists.txt b/src/network/CMakeLists.txt
+index c2a34c5319..2bc72409cc 100644
+--- a/src/network/CMakeLists.txt
++++ b/src/network/CMakeLists.txt
+@@ -170,22 +170,22 @@ qt_internal_extend_target(Network CONDITION QT_FEATURE_dnslookup
+         kernel/qdnslookup.cpp kernel/qdnslookup.h kernel/qdnslookup_p.h
+ )
+ 
+-qt_internal_extend_target(Network CONDITION UNIX
+-    SOURCES
+-        kernel/qhostinfo_unix.cpp
+-        socket/qnativesocketengine_unix.cpp
+-        socket/qnet_unix_p.h
+-)
+-
+-qt_internal_extend_target(Network CONDITION QT_FEATURE_linux_netlink AND UNIX
+-    SOURCES
+-        kernel/qnetworkinterface_linux.cpp
+-)
+-
+-qt_internal_extend_target(Network CONDITION UNIX AND NOT QT_FEATURE_linux_netlink
+-    SOURCES
+-        kernel/qnetworkinterface_unix.cpp
+-)
++#qt_internal_extend_target(Network CONDITION 0
++#    SOURCES
++#        kernel/qhostinfo_unix.cpp
++#        socket/qnativesocketengine_unix.cpp
++#        socket/qnet_unix_p.h
++#)
++
++#qt_internal_extend_target(Network CONDITION QT_FEATURE_linux_netlink AND UNIX
++#    SOURCES
++#        kernel/qnetworkinterface_linux.cpp
++#)
++
++#qt_internal_extend_target(Network CONDITION UNIX AND NOT QT_FEATURE_linux_netlink
++#    SOURCES
++#        kernel/qnetworkinterface_unix.cpp
++#)
+ 
+ qt_internal_extend_target(Network CONDITION WIN32
+     SOURCES
+@@ -303,25 +303,25 @@ qt_internal_extend_target(Network CONDITION MSVC
+         "-D_WINSOCK_DEPRECATED_NO_WARNINGS"
+ )
+ 
+-qt_internal_extend_target(Network CONDITION QT_FEATURE_localserver
+-    SOURCES
+-        socket/qlocalserver.cpp socket/qlocalserver.h socket/qlocalserver_p.h
+-        socket/qlocalsocket.cpp socket/qlocalsocket.h socket/qlocalsocket_p.h
+-)
+-
+-qt_internal_extend_target(Network CONDITION INTEGRITY AND QT_FEATURE_localserver
+-    SOURCES
+-        socket/qlocalserver_tcp.cpp
+-        socket/qlocalsocket_tcp.cpp
+-    DEFINES
+-        QT_LOCALSOCKET_TCP
+-)
+-
+-qt_internal_extend_target(Network CONDITION QT_FEATURE_localserver AND UNIX AND NOT INTEGRITY
+-    SOURCES
+-        socket/qlocalserver_unix.cpp
+-        socket/qlocalsocket_unix.cpp
+-)
++#qt_internal_extend_target(Network CONDITION QT_FEATURE_localserver
++#    SOURCES
++#        socket/qlocalserver.cpp socket/qlocalserver.h socket/qlocalserver_p.h
++#        socket/qlocalsocket.cpp socket/qlocalsocket.h socket/qlocalsocket_p.h
++#)
++
++#qt_internal_extend_target(Network CONDITION INTEGRITY AND QT_FEATURE_localserver
++#    SOURCES
++#        socket/qlocalserver_tcp.cpp
++#        socket/qlocalsocket_tcp.cpp
++#    DEFINES
++#        QT_LOCALSOCKET_TCP
++#)
++
++#qt_internal_extend_target(Network CONDITION QT_FEATURE_localserver AND UNIX AND NOT INTEGRITY
++#    SOURCES
++#        socket/qlocalserver_unix.cpp
++#        socket/qlocalsocket_unix.cpp
++#)
+ 
+ qt_internal_extend_target(Network CONDITION QT_FEATURE_localserver AND WIN32
+     SOURCES
+-- 
+2.42.0
+
