@@ -53,6 +53,8 @@ For Javascript statements the line coverage is roughly as you would expect.
 
 For declarative QML parts, only the declaration line of each UI object is tracked, and coverage for that line incremented whenever an object of that declaration generates a Component.onCompleted event.
 
+Properties are tracked on evaluation.
+
 Note that for the time being, the tool is not rigorously tested. False positives are very unlikely.
 
 ## Known issues
