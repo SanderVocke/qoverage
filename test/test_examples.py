@@ -27,6 +27,17 @@ output_base_dir = os.environ.get("OUTPUT_DIR", tempfile.mkdtemp())
 class TestClass:
 
     def test_example(self, example_name, request):
+        ```
+        """Test an example by running it with the given name and request.
+        
+        Args:
+            example_name (str): The name of the example to be tested.
+            request (pytest.FixtureRequest): The pytest request object for the test.
+        
+        Returns:
+            None: This method doesn't return anything, but updates instance attributes and runs the example.
+        """
+        ```
         self.example_name = example_name
         self.request = request
         self.request.node.open_diff_tool = OPEN_DIFF_TOOL
@@ -36,6 +47,17 @@ class TestClass:
         self.run(example_name)
         
     def run(self, example):
+        ```
+        """Run the coverage analysis for a given example.
+        
+        Args:
+            example (str): The name of the example to run.
+        
+        Returns:
+            None: This method doesn't return anything, but it performs coverage analysis and asserts the results.
+        """
+        
+        ```
         results = {}
         report_xml = None
 
