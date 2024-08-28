@@ -5,6 +5,10 @@ const n_lines = $n_lines
 const n_annotations = $n_annotations
 const debug = $debug
 
+/**
+ * Retrieves the filename of the currently executing script.
+ * @returns {string} The filename without the full path or line number information.
+ */
 function get_filename() {
     return new Error().stack.split('\n')[0].replace(/.*file:\/\//, "").replace(/.qoverage.js:.*/, "")
 }
@@ -19,6 +23,12 @@ class QoverageDefaultFileCollector {
     }
 
     trace(lines) {
+        /**
+         * Increments the state counter for each line in the given array if it exists in line_states.
+         * @param {Array} lines - An array of line identifiers to process.
+         * @returns {void} This method does not return a value.
+         */
+        
         lines.forEach( line => {
             if (this.line_states[line] !== null) {
                 this.line_states[line]++
@@ -65,6 +75,10 @@ class QoverageCollector {
         if (!QoverageSingleton.QoverageSingleton) {
             throw new Error("QoverageSingleton not defined; did you add qoverage's QML directory to your QML import path?")
         }
+        /**
+         * Connects the onAboutToQuit signal of QoverageSingleton to the on_about_to_quit method of the current instance.
+         * This ensures that the on_about_to_quit method is called when the application is about to quit.
+         */
         QoverageSingleton.QoverageSingleton.onAboutToQuit.connect(() => this.on_about_to_quit())
     }
 
@@ -82,10 +96,20 @@ var qoverage_global_collector = new QoverageCollector(get_filename(), include_li
 
 // Functions below are called from instrumented QML
 
+/**
+ * Traces the creation of an object by its ID.
+ * @param {string|number} id - The identifier of the object being created.
+ * @returns {void} This function does not return a value.
+ */
 function trace_obj_create(id) {
     qoverage_global_collector.trace(id)
 }
 
+/**
+ * Traces the execution of a block identified by the given ID.
+ * @param {number|string} id - The unique identifier for the block to be traced.
+ * @returns {void} This function does not return a value.
+ */
 function trace_exec_block(id) {
     qoverage_global_collector.trace(id)
 }
