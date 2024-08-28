@@ -37,10 +37,31 @@ properties_blacklist = [
 ]
 
 def format_annotation(tag, id):
+    """Formats an annotation with a tag and ID.
+    
+    Args:
+        tag (str): The tag for the annotation.
+        id (str): The ID for the annotation.
+    
+    Returns:
+        str: A formatted annotation string.
+    """
+    
     return ' /*@QOVERAGE:{}:{}*/ '.format(tag, id)
 
 def annotation_finder(tag, id=None):
-    if id != None:
+    ```
+    """Generates a regular expression pattern for finding QOVERAGE annotations in code.
+    
+    Args:
+        tag (str): The tag to search for in the annotation.
+        id (int, optional): The specific ID to match. If None, matches any numeric ID.
+    
+    Returns:
+        str: A regular expression pattern for matching QOVERAGE annotations.
+    """
+    
+    ```    if id != None:
         return r'/\*@QOVERAGE:' + tag + r':' + str(id) + '\*/'
     return r'/\*@QOVERAGE:' + tag + r':(\d+)\*/'
 
@@ -50,14 +71,45 @@ def annotation_finder(tag, id=None):
 # being if a statement implicitly throws an exception.
 # That means we need special handling of things like branches, throws, returns, loops etc.
 def start_exec_block_annotation(id):
+    ```
+    """Formats and returns an execution block start annotation.
+    
+    Args:
+        id (str): The identifier for the execution block.
+    
+    Returns:
+        str: The formatted execution block start annotation.
+    """
+    ```
     return format_annotation(exec_block_start_tag, id)
 def end_exec_block_annotation(id):
+    ```
+    """
+    Formats and returns the end annotation for an execution block.
+    
+    Args:
+        id (str): The unique identifier for the execution block.
+    
+    Returns:
+        str: The formatted end annotation for the execution block.
+    """
+    ```
     return format_annotation(exec_block_end_tag, id)
 
 # An object annotation marks a QML UI object. Only the opening and closing braces
 # of the object are marked. The rest of the contents will not be getting coverage information
 # unless it falls in another detection (e.g. another object, function, ...)
 def start_obj_annotation(id):
+    ```
+    """Generates the start annotation for an object.
+    
+    Args:
+        id (str): The unique identifier for the object.
+    
+    Returns:
+        str: The formatted start annotation tag for the object.
+    """
+    ```
     return format_annotation(obj_start_tag, id)
 def end_obj_annotation(id):
     return format_annotation(obj_end_tag, id)
@@ -65,6 +117,17 @@ def end_obj_annotation(id):
 # An expression to return block annotation marks an expression which is used as a
 # script binding. We want to turn it into a block which returns the expression.
 def block_open_with_return_annotation(id):
+    ```
+    """
+    Formats a block opening tag with a return annotation.
+    
+    Args:
+        id (str): The identifier for the block.
+    
+    Returns:
+        str: The formatted block opening tag with return annotation.
+    """
+    ```
     return format_annotation(block_with_return_start_tag, id)
 def block_close_annotation(id):
     return format_annotation(block_end_tag, id)
@@ -72,6 +135,16 @@ def block_open_annotation(id):
     return format_annotation(block_start_tag, id)
 
 def is_block_open(annotation_text):
+    ```
+    """Check if a block is open in the annotation text.
+    
+    Args:
+        annotation_text (str): The text to search for block start tags.
+    
+    Returns:
+        bool: True if a block start tag is found, False otherwise.
+    """
+    ```
     return annotation_text.find(block_start_tag) != -1 or \
            annotation_text.find(block_with_return_start_tag) != -1
 
@@ -91,6 +164,18 @@ def pre_annotate(contents, qmldom : QMLDom = None, filename='(unknown file)', de
     annotation_id = 0
 
     def add_annotation(offset, annotation):
+        ```
+        """
+        Adds an annotation to the list of annotations.
+        
+        Args:
+            offset (int): The offset position of the annotation.
+            annotation (str): The content of the annotation.
+        
+        Returns:
+            None
+        """
+        ```
         annotations.append({
             'offset': offset,
             'annotation': annotation
@@ -101,6 +186,15 @@ def pre_annotate(contents, qmldom : QMLDom = None, filename='(unknown file)', de
         annotation_id += 1
     
     def apply_annotations():
+        """Apply annotations to the contents.
+        
+        Args:
+            None
+        
+        Returns:
+            str: A new string with annotations applied to the original contents.
+        """
+        
         def annot_sorter(a):
             return a['offset']
         
@@ -250,6 +344,18 @@ def pre_annotate(contents, qmldom : QMLDom = None, filename='(unknown file)', de
     return (result, ast_str)
 
 def generate_db_js(db, n_lines, debug=False):
+    ```
+    """Generate JavaScript code for database tracking based on input parameters.
+    
+    Args:
+        db (dict): A dictionary containing database information with keys as IDs and values as property dictionaries.
+        n_lines (int): The total number of lines in the file being processed.
+        debug (bool, optional): Flag to enable debug mode. Defaults to False.
+    
+    Returns:
+        str: Generated JavaScript code for database tracking.
+    """
+    ```
     n_annotations = max(db.keys()) + 1
     ids_to_lines = {}
     include_lines = set()
@@ -280,11 +386,37 @@ def generate_db_js(db, n_lines, debug=False):
 
 
 def final_annotate(pre_annotated: str, db_lib_name: str, debug=False) -> str:
+    ```
+    """Performs final annotation on pre-annotated code and generates coverage database.
+    
+    Args:
+        pre_annotated (str): The pre-annotated code string.
+        db_lib_name (str): The name of the database library.
+        debug (bool, optional): Flag to enable debug mode. Defaults to False.
+    
+    Returns:
+        tuple: A tuple containing:
+            - str: The fully annotated code string.
+            - str: The generated JavaScript code for the coverage database.
+    """
+    ```
+    
     result = copy.deepcopy(pre_annotated)
 
     # Scan markers and create the coverage database
     db = {}
     def db_add_exec_block(id, start, end):
+        """Add an execution block to the database.
+        
+        Args:
+            id (str): The unique identifier for the execution block.
+            start (int or float): The start time of the execution block.
+            end (int or float): The end time of the execution block.
+        
+        Returns:
+            None: This function doesn't return anything.
+        """
+        
         logger.debug("Add exec_block {}: {}-{}".format(id, start, end))
         db[id] = {
             'type': 'exec_block',
