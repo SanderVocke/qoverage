@@ -26,6 +26,17 @@ print(f"Output dir: {OUTPUT_DIR}")
 print(f"QML_IMPORT_PATH env: {QML_IMPORT_PATH}")
 
 def run_and_check(step, command, maybe_write_log=None):
+    """Run a shell command and check its return code.
+    
+    Args:
+        step (str): Description of the current step being executed.
+        command (str): The shell command to be executed.
+        maybe_write_log (str, optional): Path to write the command output log, if provided.
+    
+    Returns:
+        None: This function doesn't return a value, it exits the program if the command fails.
+    """
+    
     print(f"{step}:\n  -> {command}")
     r = subprocess.run(command, shell=True, stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
     output = r.stdout.decode()
