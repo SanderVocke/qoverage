@@ -15,6 +15,18 @@ from .report import generate_report
 from .parse_coverage import parse_coverage
 
 def instrument(args, logger, debug):
+    ```
+    """Instruments QML files with code coverage annotations.
+    
+    Args:
+        args (argparse.Namespace): Command-line arguments containing configuration options
+        logger (logging.Logger): Logger object for output messages
+        debug (bool): Flag to enable debug mode
+    
+    Returns:
+        None: This function doesn't return anything, but modifies files in-place or writes to output locations
+    """
+    ```
     globs = args.glob if args.glob else []
     if args.path and not args.glob_base:
         args.glob_base = args.path[0]
@@ -100,7 +112,23 @@ def instrument(args, logger, debug):
             continue
     
 def collect(input, maybe_cmd, files_path, report, maybe_strip_paths_expr, maybe_prefix, logger):
-    if not maybe_prefix:
+    ```
+    """Collect and process coverage data from input or command execution.
+    
+    Args:
+        input (str): Path to the input file containing coverage data.
+        maybe_cmd (list): Command to execute for generating coverage data.
+        files_path (str): Base path for the files being covered.
+        report (str): Path to write the coverage report.
+        maybe_strip_paths_expr (str): Regular expression to strip paths from filenames.
+        maybe_prefix (str): Prefix to add to filenames in the report.
+        logger (logging.Logger): Logger object for logging information and warnings.
+    
+    Returns:
+        None: This function writes the coverage report to a file and doesn't return anything.
+    """
+    
+    ```    if not maybe_prefix:
         maybe_prefix = ''
     
     if maybe_cmd and input:
@@ -127,6 +155,15 @@ def collect(input, maybe_cmd, files_path, report, maybe_strip_paths_expr, maybe_
     # Collect coverage data from the logs/dump.
     def filename_transform_to_reported(f):
         # Transform filenames from the log data to the files as will be reported.
+        """Transform filenames from log data to reported format.
+        
+        Args:
+            f (str): The input filename to be transformed.
+        
+        Returns:
+            str: The transformed filename.
+        """
+        
         rval = f
         if maybe_strip_paths_expr:
             rval = re.sub(maybe_strip_paths_expr, norm_files_path, rval)
@@ -189,6 +226,16 @@ def collect(input, maybe_cmd, files_path, report, maybe_strip_paths_expr, maybe_
         f.write(report_contents)
 
 def restore(path, logger):
+    """Restores files from backups and removes coverage-related files.
+    
+    Args:
+        path (str): The root directory path to search for files.
+        logger (logging.Logger): Logger object for logging information.
+    
+    Returns:
+        None: This function doesn't return anything.
+    """
+    
     backups = glob.glob('{}/**/*.qoverage.bkp'.format(path), recursive=True)
     logger.info("Found {} backups, restoring.".format(len(backups)))
     for backup in backups:
@@ -201,6 +248,16 @@ def restore(path, logger):
         os.remove(intermediate)
 
 def main():
+    ```
+    """Main function for the qoverage command-line interface.
+    
+    Args:
+        None
+    
+    Returns:
+        None: This function doesn't return anything, but it executes the main logic of the program.
+    """
+    ```
     try:
         parser = argparse.ArgumentParser(
             prog="qoverage",
