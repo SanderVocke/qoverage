@@ -10,6 +10,16 @@ logger = logging.getLogger('qmldom')
 def fix_string_literals(ast):
     n_fixes = 0
     def do_replace(find, replace):
+        """Recursively replaces occurrences of a pattern in the AST string.
+        
+        Args:
+            find (str): The pattern to search for in the AST.
+            replace (str): The string to replace the found pattern with.
+        
+        Returns:
+            None: This function modifies the AST in-place and updates the number of fixes.
+        """
+        
         nonlocal ast, n_fixes
         match = re.search(find, ast)
         new_ast, n = re.subn(find, replace, ast)
@@ -38,6 +48,15 @@ class QMLDom:
         logger.debug('qmldom version: {}'.format(self.qmldom_version()))
     
     def qmldom_version(self) -> str:
+        """Retrieves the version of qmldom.
+        
+        Args:
+            self: The instance of the class containing this method.
+        
+        Returns:
+            str: The version of qmldom as a string, stripped of any leading or trailing whitespace.
+        """
+        
         return subprocess.check_output([self.qmldom, '--version']).decode('utf-8').strip()
     
     def ast(self, contents) -> str:
