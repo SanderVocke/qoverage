@@ -7,7 +7,25 @@ logger = logging.getLogger('find_qmldom')
 script_dir = os.path.dirname(os.path.realpath(__file__))
 
 def find_qmldom() -> str:
+    """Searches for and returns the path to a suitable qmldom executable.
+    
+    Args:
+        None
+    
+    Returns:
+        str: The path to the qmldom executable if found, None otherwise.
+    """
+    
     def glob_candidates(path: str):
+        """Find executable qmldom files within a given directory and its subdirectories.
+        
+        Args:
+            path (str): The root directory path to search for qmldom files.
+        
+        Returns:
+            list: A list of paths to executable qmldom files found in the specified directory and its subdirectories.
+        """
+        
         return [e for e in glob.glob("{}/**/qmldom".format(path), recursive=True) if os.access(path, os.X_OK)]
 
     candidates_per_path = [glob_candidates(path) for path in [
