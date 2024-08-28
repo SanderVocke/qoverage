@@ -7,6 +7,16 @@ logger = logging.getLogger('report')
 
 def generate_report(coverages):
 
+    ```
+    """Generate a coverage report in XML format based on provided coverage data.
+    
+    Args:
+        coverages (dict): A dictionary where keys are file paths and values are JSON-encoded coverage data.
+    
+    Returns:
+        str: A pretty-printed XML string representing the coverage report in Cobertura format.
+    """
+    ```
     imp = xml.dom.minidom.DOMImplementation()
     doctype = imp.createDocumentType(
         qualifiedName='coverage',
