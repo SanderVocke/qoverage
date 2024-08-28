@@ -6,6 +6,16 @@ import logging
 logger = logging.getLogger('qoverage.dom')
 
 def parse_token_loc(loc: str):
+    ```
+    """Parses a token location string and returns a dictionary with location details.
+    
+    Args:
+        loc (str): A string representing the token location in the format 'off:X len:Y l:Z c:W'.
+    
+    Returns:
+        dict or None: A dictionary containing 'offset', 'length', 'line', and 'column' as integers if the input string matches the expected format, or None if there is no match.
+    """
+    ```
     match = re.match(r'off:(\d+) len:(\d+) l:(\d+) c:(\d+)', loc)
     if match:
         return {
@@ -23,6 +33,17 @@ def token_loc(node, attribute):
     return None
 
 def token_offset(node, token_name_or_names, add_length=False):
+    """Calculate the offset of a specified token within a node.
+    
+    Args:
+        node (object): The node to search for the token.
+        token_name_or_names (str or list): The name or list of names of the token(s) to search for.
+        add_length (bool, optional): Whether to add the token length to the offset. Defaults to False.
+    
+    Returns:
+        int or None: The offset of the token if found, or None if not found.
+    """
+    
     if isinstance (token_name_or_names, list):
         for name in token_name_or_names:
             maybe_result = token_offset(node, name, add_length)
@@ -35,7 +56,26 @@ def token_offset(node, token_name_or_names, add_length=False):
     return None
 
 def node_is(node, tag_name_or_names):
+    """Check if a node matches the specified tag name or names.
+    
+    Args:
+        node (xml.dom.minidom.Node): The XML node to check.
+        tag_name_or_names (str or list): A single tag name or a list of tag names to match against.
+    
+    Returns:
+        bool: True if the node's name matches the specified tag name(s), False otherwise.
+    """
+    
     def match(name):
+        """Checks if a given name matches a specified tag name or list of tag names.
+        
+        Args:
+            name (str): The name to be matched against the tag name(s).
+        
+        Returns:
+            bool: True if the name matches the tag name or is in the list of tag names, False otherwise.
+        """
+        
         if isinstance(tag_name_or_names, str):
             return name == tag_name_or_names
         elif isinstance(tag_name_or_names, list):
@@ -49,11 +89,31 @@ def node_as(node, tag_name_or_names):
     return None
 
 def parent_as(node, tag_name_or_names):
+    """Recursively searches for a parent node with a specified tag name or names.
+    
+    Args:
+        node (Node): The starting node to search from.
+        tag_name_or_names (str or list): The target tag name(s) to search for.
+    
+    Returns:
+        Node or None: The first parent node that matches the specified tag name(s), or None if not found.
+    """
+    
     if node.parentNode.nodeName == 'Node':
         return parent_as(node.parentNode, tag_name_or_names)
     return node_as(node.parentNode, tag_name_or_names)
 
 def children_filter_nodes(node):
+    ```
+    """Filter and transform child nodes of a given XML node.
+    
+    Args:
+        node (xml.dom.Node): The parent node to filter children from.
+    
+    Returns:
+        list: A list of filtered and transformed child nodes.
+    """
+    ```
     def child(c):
         if node_is(c, 'Node'):
             return children_filter_nodes(c)[0]
@@ -67,6 +127,17 @@ def children_filter_nodes(node):
 # to the point just before where it is executed/evauated.
 # If unknown/not applicable, return None.
 def node_eval_start_offset(node):
+    ```
+    """Evaluates the start offset of a given node in an Abstract Syntax Tree (AST).
+    
+    Args:
+        node (ASTNode): The node to evaluate the start offset for.
+    
+    Returns:
+        int or None: The start offset of the node if found, or None if not found.
+    """
+    
+    ```
     def from_attrib(attrib, add_length=False):
         return token_offset(node, attrib)
     
