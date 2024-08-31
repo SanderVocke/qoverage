@@ -1,0 +1,65 @@
+From 6a92b71abf0c0423c87c484ebacf99a081907186 Mon Sep 17 00:00:00 2001
+From: Builder <builder@nothing.com>
+Date: Wed, 6 Sep 2023 10:30:45 +0000
+Subject: [PATCH] Fixes for wasm
+
+---
+ src/qml/memory/qv4stacklimits.cpp | 12 ++++++++++++
+ tools/qmldom/CMakeLists.txt       |  1 +
+ 2 files changed, 13 insertions(+)
+
+diff --git a/src/qml/memory/qv4stacklimits.cpp b/src/qml/memory/qv4stacklimits.cpp
+index d610780e39..ce23ae1e5c 100644
+--- a/src/qml/memory/qv4stacklimits.cpp
++++ b/src/qml/memory/qv4stacklimits.cpp
+@@ -108,12 +108,19 @@ static StackProperties createStackProperties(void *base, qsizetype size = Platfo
+ // may grow. Use rlimit instead. rlimit does not work for secondary
+ // threads, though. If getrlimit fails, we assume the platform
+ // stack size.
++#ifndef WASIX
++#define QT_SUPPORT_GETRLIMIT
++#endif
+ static qsizetype getMainStackSizeFromRlimit()
+ {
++#ifdef QT_SUPPORT_GETRLIMIT
+     rlimit limit;
+     return (getrlimit(RLIMIT_STACK, &limit) == 0 && limit.rlim_cur != RLIM_INFINITY)
+             ? qsizetype(limit.rlim_cur)
+             : qsizetype(PlatformStackSize);
++#else
++    return qsizetype(PlatformStackSize);
++#endif
+ }
+ #endif
+ 
+@@ -322,10 +329,15 @@ static StackSegment stackSegmentFromProc()
+     return {0, 0};
+ }
+ 
++#ifndef WASIX
++#define SUPPORT_SYSCALL_GETTID
++#endif
+ StackProperties stackProperties()
+ {
++#ifdef SUPPORT_SYSCALL_GETTID
+     if (getpid() != static_cast<pid_t>(syscall(SYS_gettid)))
+         return stackPropertiesGeneric();
++#endif
+ 
+     // On linux (including android), the pthread functions are expensive
+     // and unreliable on the main thread.
+diff --git a/tools/qmldom/CMakeLists.txt b/tools/qmldom/CMakeLists.txt
+index 86e1a10d29..ab46d95a8b 100644
+--- a/tools/qmldom/CMakeLists.txt
++++ b/tools/qmldom/CMakeLists.txt
+@@ -9,6 +9,7 @@ qt_get_tool_target_name(target_name qmldom)
+ qt_internal_add_tool(${target_name}
+     TARGET_DESCRIPTION "QML Dom handler"
+     TOOLS_TARGET Qml # special case
++    FORCE_BUILD
+     SOURCES
+         qmldomtool.cpp
+     LIBRARIES
+-- 
+2.42.0
+
