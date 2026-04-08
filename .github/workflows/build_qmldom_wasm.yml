@@ -83,7 +83,7 @@ jobs:
           cmake --build . --parallel 4 --target qmldom.js
      
       - name: Upload qmldom
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: qmldom-emscripten
           path: qt6-build/qtbase/bin/qmldom*

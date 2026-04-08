@@ -25,14 +25,14 @@ jobs:
       - name: Prepare manylinux
         shell: bash
         run: |
-          dnf -y install ninja-build
+          dnf -y install ninja-build dbus-devel
       
       - name: Cache qmldom build
         id: cache-qmldom
         uses: actions/cache@v3
         with:
           path: qmldom
-          key: qmldom-6.5.3
+          key: qmldom-6.11.0
 
       - name: Print cache status for qmldom
         run: |
@@ -41,16 +41,21 @@ jobs:
       - if: ${{ github.event.inputs.force-rebuild == 'true' || steps.cache-qmldom.outputs.cache-hit != 'true' }}
         name: Download Qt sources
         run: |
-            curl -L https://download.qt.io/official_releases/qt/6.5/6.5.3/single/qt-everywhere-src-6.5.3.tar.xz --output qt-everywhere-src-6.5.3.tar.xz
-            tar -xf qt-everywhere-src-6.5.3.tar.xz
-            mv qt-everywhere-src-6.5.3 qt
+            curl -L https://download.qt.io/official_releases/qt/6.11/6.11.0/single/qt-everywhere-src-6.11.0.tar.xz --output qt-everywhere-src-6.11.0.tar.xz
+            tar -xf qt-everywhere-src-6.11.0.tar.xz
+            mv qt-everywhere-src-6.11.0 qt
     
       - if: ${{ github.event.inputs.force-rebuild == 'true' || steps.cache-qmldom.outputs.cache-hit != 'true' }}
         name: Configure Qt
         run: |
             mkdir qt-build
             cd qt-build
-            ../qt/configure -static -no-icu -qt-pcre -qt-zlib
+            ../qt/configure -static -release \
+              -submodules qtdeclarative \
+              -no-gui -no-widgets -no-opengl \
+              -no-dbus -no-icu -no-fontconfig \
+              -qt-pcre -qt-zlib \
+              -- -DQT_BUILD_TESTS=OFF -DQT_BUILD_EXAMPLES=OFF -G "Unix Makefiles"
             ls -la
             ls -la *
     
@@ -58,11 +63,11 @@ jobs:
         name: Build Qt
         run: |
             cd qt-build
-            cmake --build . --parallel 4 --target qmldom
+            cmake --build . --parallel 4
             cp qtbase/bin/qmldom ../qmldom
       
       - name: Upload qmldom
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: qmldom
           path: qmldom
