@@ -25,7 +25,7 @@ jobs:
       - name: Prepare manylinux
         shell: bash
         run: |
-          dnf -y install ninja-build
+          dnf -y install ninja-build dbus-devel
       
       - name: Cache qmldom build
         id: cache-qmldom
