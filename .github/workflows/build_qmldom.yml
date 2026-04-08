@@ -58,7 +58,7 @@ jobs:
         name: Build Qt
         run: |
             cd qt-build
-            cmake --build . --parallel 4 --target qmldom
+            cmake --build . --parallel 4
             cp qtbase/bin/qmldom ../qmldom
       
       - name: Upload qmldom
