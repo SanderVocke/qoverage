@@ -50,7 +50,7 @@ jobs:
         run: |
             mkdir qt-build
             cd qt-build
-            ../qt/configure -static -no-icu -qt-pcre -qt-zlib
+            ../qt/configure -static -no-icu -qt-pcre -qt-zlib -G "Unix Makefiles"
             ls -la
             ls -la *
     
