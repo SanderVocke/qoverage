@@ -50,7 +50,12 @@ jobs:
         run: |
             mkdir qt-build
             cd qt-build
-            ../qt/configure -static -no-icu -qt-pcre -qt-zlib -cmake-generator "Unix Makefiles"
+            ../qt/configure -static -release \
+              -submodules qtdeclarative \
+              -no-gui -no-widgets -no-opengl \
+              -no-dbus -no-icu -no-fontconfig \
+              -qt-pcre -qt-zlib \
+              -- -DQT_BUILD_TESTS=OFF -DQT_BUILD_EXAMPLES=OFF -G "Unix Makefiles"
             ls -la
             ls -la *
     
